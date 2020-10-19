@@ -17,6 +17,29 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 #
 #======================= END GPL LICENSE BLOCK ========================
+import time
+from math import ceil
+
+import add_curve_sapling_3_2_8
+from .ExportData import ExportData
+from .ImportData import ImportData
+from .PresetMenu import PresetMenu
+from .add_tree import add_tree
+from .get_preset_paths import get_preset_paths
+
+# from .get_preset_paths import get_preset_paths
+# from .utils import toRad, evalBez, roundBone
+# from .preform_pruning import perform_pruning
+# from .shape_ratio import shape_ratio
+# from .kickstart_trunk import kickstart_trunk
+# from .fabricate_stems import fabricate_stems
+# from .gen_leaf_mesh import gen_leaf_mesh
+# from .create_armature import create_armature
+# from .find_taper import find_taper
+# from .leaf_rot import leaf_rot
+import bpy
+import bpy.types
+from bpy.props import FloatVectorProperty, IntVectorProperty, FloatProperty, BoolProperty, EnumProperty, IntProperty, StringProperty
 
 bl_info = {
     "name": "Sapling_3",
@@ -31,23 +54,13 @@ bl_info = {
 
 if "bpy" in locals():
     import importlib
-    importlib.reload(utils)
+    importlib.reload(add_curve_sapling_3_2_8)
 else:
-    from add_curve_sapling_3_2_8 import utils
-
-import bpy
-import time
-import os
-import ast
+    from .utils import toRad, evalBez, roundBone
+    from .get_preset_paths import get_preset_paths
+    from .add_tree import add_tree
 
 #import cProfile
-
-from mathutils import *
-from math import pi, sin, degrees, radians, atan2, copysign, ceil
-from random import random, uniform, seed, choice, getstate, setstate
-from bpy.props import *
-
-from add_curve_sapling_3_2_8.utils import *
 
 useSet = False
 is_first = False
@@ -111,137 +124,6 @@ settings = [('0', 'Geometry', 'Geometry'),
 branchmodes = [("original", "Original", "rotate around each branch"),
               ("rotate", "Rotate", "evenly distribute  branches to point outward from center of tree"),
               ("distance", "Distance", "remove overlapping branches")]
-
-
-def getPresetpaths():
-    """Return paths for both local and user preset folders"""
-    userDir = os.path.join(bpy.utils.script_path_user(), 'presets', 'operator', 'add_curve_sapling_3')
-    
-    if os.path.isdir(userDir):
-        pass
-    else:
-        os.makedirs(userDir)
-    
-    script_file = os.path.realpath(__file__)
-    directory = os.path.dirname(script_file)
-    localDir = os.path.join(directory, "presets")
-    
-    return (localDir, userDir)
-
-
-class ExportData(bpy.types.Operator):
-    """This operator handles writing presets to file"""
-    bl_idname = 'sapling.exportdata'
-    bl_label = 'Export Preset'
-
-    data: StringProperty()
-
-    def execute(self, context):
-        # Unpack some data from the input
-        data, filename, overwrite = eval(self.data)
-
-        fpath1 = os.path.join(getPresetpaths()[0], filename + '.py')
-        fpath2 = os.path.join(getPresetpaths()[1], filename + '.py')
-        
-        if os.path.exists(fpath1):
-            # If it exists in built-in presets then report an error
-            self.report({'ERROR_INVALID_INPUT'}, 'Can\'t have same name as built-in preset')
-            return {'CANCELLED'}
-        elif (not os.path.exists(fpath2)) or (os.path.exists(fpath2) and overwrite):
-            #if (it does not exist) or (exists and overwrite) then write file
-            if data:
-                # If it doesn't exist, create the file with the required data
-                f = open(os.path.join(getPresetpaths()[1], filename + '.py'), 'w')
-                f.write(data)
-                f.close()
-                return {'FINISHED'}
-            else:
-                return {'CANCELLED'}
-        else:
-            # If it exists then report an error
-            self.report({'ERROR_INVALID_INPUT'}, 'Preset Already Exists')
-            return {'CANCELLED'}
-            
-
-class ImportData(bpy.types.Operator):
-    """This operator handles importing existing presets"""
-    bl_idname = 'sapling.importdata'
-    bl_label = 'Import Preset'
-
-    filename: StringProperty()
-
-    def execute(self, context):
-        # Make sure the operator knows about the global variables
-        global settings, useSet, is_first
-        # Read the preset data into the global settings
-        try:
-            f = open(os.path.join(getPresetpaths()[0], self.filename), 'r')
-        except (FileNotFoundError, IOError):
-            f = open(os.path.join(getPresetpaths()[1], self.filename), 'r')
-        settings = f.readline()
-        f.close()
-        #print(settings)
-        settings = ast.literal_eval(settings)
-        
-        #use old attractup
-        if type(settings['attractUp']) == float:
-            atr = settings['attractUp']
-            settings['attractUp'] = [0, 0, atr, atr]
-        
-        #use old leaf rotations
-        if 'leafDownAngle' not in settings:
-            l = settings['levels']
-            settings['leafDownAngle'] = settings['downAngle'][min(l, 3)]
-            settings['leafDownAngleV'] = settings['downAngleV'][min(l, 3)]
-            settings['leafRotate'] = settings['rotate'][min(l, 3)]
-            settings['leafRotateV'] = settings['rotateV'][min(l, 3)]
-        
-        #zero leaf bend
-        settings['bend'] = 0
-        
-        #use old leaf settings
-        if 'leafType' not in settings:
-            settings['leafType'] = '0'
-        if settings['leaves'] < 0:
-            settings['leaves'] = abs(settings['leaves'])
-            settings['leafType'] = '4'
-        if settings['leafRotate'] < 1:
-            settings['leafType'] = '2'
-        
-        if 'noTip' not in settings:
-            settings['noTip'] = False
-            
-        # Set the flag to use the settings
-        useSet = True
-        is_first = True
-        return {'FINISHED'}
-
-
-def presetAsDict(filename):
-    try:
-        f = open(os.path.join(getPresetpaths()[0], filename), 'r')
-    except (FileNotFoundError, IOError):
-        f = open(os.path.join(getPresetpaths()[1], filename), 'r')
-    settings = f.readline()
-    f.close()
-    settings = ast.literal_eval(settings)
-    return settings
-
-
-class PresetMenu(bpy.types.Menu):
-    """Create the preset menu by finding all preset files
-    in the preset directory"""
-    bl_idname = "sapling.presetmenu" #2.8
-    bl_label = "Presets"
-
-    def draw(self, context):
-        # Get all the sapling presets
-        presets = [a for a in os.listdir(getPresetpaths()[0]) if a[-3:] == '.py']
-        presets.extend([a for a in os.listdir(getPresetpaths()[1]) if a[-3:] == '.py'])
-        layout = self.layout
-        # Append all to the menu
-        for p in presets:
-            layout.operator("sapling.importdata", text=p[:-3]).filename = p
 
 
 class AddTree(bpy.types.Operator):
@@ -960,7 +842,7 @@ class AddTree(bpy.types.Operator):
                 setattr(self, 'showLeaves', False)
             useSet = False
         if self.do_update:
-            addTree(self)
+            add_tree(self)
             #cProfile.runctx("addTree(self)", globals(), locals())
             print("Tree creation in %0.1fs" %(time.time()-start_time))
             
@@ -1187,7 +1069,7 @@ class AddMultipleTrees(bpy.types.Operator):
                 x = (n // grid) * space
                 y = (n % grid) * space
                 bpy.context.scene.cursor.location = (x, y, 0)
-                addTree(self)
+                add_tree(self)
             setattr(self, 'seed', initSeed)
             self.do_update = False
             return {'FINISHED'}
