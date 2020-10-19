@@ -26,12 +26,8 @@ def add_tree(props):
 
     # Set all other variables
     tree_settings = TreeSettings(props)
-    branches = props.branches#
     scaleV = props.scaleV#
-    shape = int(props.shape)#
-    shapeS = int(props.shapeS)#
     baseSize = props.baseSize
-    taper = props.taper#
     noTip = props.noTip
     attachment = props.attachment
     leafType = props.leafType
@@ -85,7 +81,7 @@ def add_tree(props):
 
     #taper
     if tree_settings.autoTaper:
-        taper = find_taper(tree_settings, taper, shape, shapeS)
+        tree_settings.taper = find_taper(tree_settings)
 
     leafObj = None
 
@@ -154,11 +150,11 @@ def add_tree(props):
 
         # If this is the first level of growth (the trunk) then we need some special work to begin the tree
         if lvl == 0:
-            kickstart_trunk(tree_settings, addstem, leaves, cu, scaleVal, taper, matIndex)
+            kickstart_trunk(tree_settings, addstem, leaves, cu, scaleVal, matIndex)
         # If this isn't the trunk then we may have multiple stem to initialize
         else:
             # For each of the points defined in the list of stem starting points we need to grow a stem.
-            fabricate_stems(tree_settings, addsplinetobone, addstem, baseSize, childP, cu, leafDist, leaves, leafType, lvl, scaleVal, shape, storeN, taper, shapeS, useOldDownAngle, useParentAngle, boneStep, matIndex)
+            fabricate_stems(tree_settings, addsplinetobone, addstem, baseSize, childP, cu, leafDist, leaves, leafType, lvl, scaleVal, storeN, useOldDownAngle, useParentAngle, boneStep, matIndex)
 
         #change base size for each level
         if lvl > 0:

@@ -3,38 +3,38 @@ from .TreeSettings import TreeSettings
 
 
 # calculate taper automatically
-def find_taper(tree_settings: TreeSettings, taper, shape, shapeS):
-    taperS = []
+def find_taper(tree_settings: TreeSettings, taper):
+    taper_s = []
     for i, t in enumerate(tree_settings.length):
         if i == 0:
             shp = 1.0
         elif i == 1:
-            shp = shape_ratio(shape, 0, custom=tree_settings.customShape)
+            shp = shape_ratio(tree_settings.shape, 0, custom=tree_settings.customShape)
         else:
-            shp = shape_ratio(shapeS, 0)
+            shp = shape_ratio(tree_settings.shapeS, 0)
         t = t * shp
-        taperS.append(t)
+        taper_s.append(t)
 
-    taperP = []
-    for i, t in enumerate(taperS):
+    taper_p = []
+    for i, t in enumerate(taper_s):
         pm = 1
         for x in range(i+1):
-            pm *= taperS[x]
-        taperP.append(pm)
+            pm *= taper_s[x]
+        taper_p.append(pm)
 
-    taperR = []
-    for i, t in enumerate(taperP):
-        t = sum(taperP[i:tree_settings.levels])
-        taperR.append(t)
+    taper_r = []
+    for i, t in enumerate(taper_p):
+        t = sum(taper_p[i:tree_settings.levels])
+        taper_r.append(t)
 
-    taperT = []
-    for i, t in enumerate(taperR):
+    taper_t = []
+    for i, t in enumerate(taper_r):
         try:
-            t = taperP[i] / taperR[i]
+            t = taper_p[i] / taper_r[i]
         except ZeroDivisionError:
             t = 1.0
-        taperT.append(t)
+        taper_t.append(t)
 
-    taperT = [t * taper[i] for i, t in enumerate(taperT)]
+    taper_t = [t * tree_settings.taper[i] for i, t in enumerate(taper_t)]
 
-    return taperT
+    return taper_t

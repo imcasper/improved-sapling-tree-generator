@@ -12,7 +12,7 @@ from .TreeSettings import TreeSettings
 
 def fabricate_stems(tree_settings: TreeSettings, addsplinetobone, addstem, baseSize, childP, cu,
                     leafDist, leaves, leafType, n,
-                    scaleVal, shape, storeN, taper, shapeS,
+                    scaleVal, storeN,
                     useOldDownAngle, useParentAngle, boneStep, matIndex):
 
     #prevent baseSize from going to 1.0
@@ -83,7 +83,7 @@ def fabricate_stems(tree_settings: TreeSettings, addsplinetobone, addstem, baseS
                 bD = ((b[0] * b[0] + b[1] * b[1]) ** .5)
 
                 #acount for length
-                bL = br.lengthPar * tree_settings.length[1] * shape_ratio(shape, (1 - br.offset) / (1 - baseSize), custom=tree_settings.customShape)
+                bL = br.lengthPar * tree_settings.length[1] * shape_ratio(tree_settings.shape, (1 - br.offset) / (1 - baseSize), custom=tree_settings.customShape)
 
                 #account for down angle
                 if tree_settings.downAngleV[1] > 0:
@@ -109,7 +109,7 @@ def fabricate_stems(tree_settings: TreeSettings, addsplinetobone, addstem, baseS
                 for i, br in enumerate(p):
                     rotV = tree_settings.rotateV[n] * .5
                     bRotate = tree_settings.rotate[n] * br.index
-                    bL = br.lengthPar * tree_settings.length[1] * shape_ratio(shape, (1 - br.stemOffset) / (1 - baseSize), custom=tree_settings.customShape)
+                    bL = br.lengthPar * tree_settings.length[1] * shape_ratio(tree_settings.shape, (1 - br.stemOffset) / (1 - baseSize), custom=tree_settings.customShape)
                     if tree_settings.downAngleV[1] > 0:
                         downA = tree_settings.downAngle[n] + (-tree_settings.downAngleV[n] * (1 - (1 - br.stemOffset) / (1 - baseSize)) ** 2)
                     else:
@@ -131,7 +131,7 @@ def fabricate_stems(tree_settings: TreeSettings, addsplinetobone, addstem, baseS
                         p2 = branch.co
                         p3 = p2 - p1
                         l = p3.length * uniform(1.0, 1.1)
-                        bL = branch.lengthPar * tree_settings.length[1] * shape_ratio(shape, (1 - branch.stemOffset) / (1 - baseSize), custom=tree_settings.customShape)
+                        bL = branch.lengthPar * tree_settings.length[1] * shape_ratio(tree_settings.shape, (1 - branch.stemOffset) / (1 - baseSize), custom=tree_settings.customShape)
                         isIntersect.append(l < bL)
 
                     del isIntersect[i]
@@ -149,7 +149,7 @@ def fabricate_stems(tree_settings: TreeSettings, addsplinetobone, addstem, baseS
                 for i, br in enumerate(p):
                     rotV = uniform(-tree_settings.rotateV[n]*.5, tree_settings.rotateV[n]*.5)
 
-                    bL = br.lengthPar * tree_settings.length[1] * shape_ratio(shape, (1 - br.stemOffset) / (1 - baseSize), custom=tree_settings.customShape)
+                    bL = br.lengthPar * tree_settings.length[1] * shape_ratio(tree_settings.shape, (1 - br.stemOffset) / (1 - baseSize), custom=tree_settings.customShape)
                     if tree_settings.downAngleV[1] > 0:
                         downA = tree_settings.downAngle[n] + (-tree_settings.downAngleV[n] * (1 - (1 - br.stemOffset) / (1 - baseSize)) ** 2)
                     else:
@@ -174,7 +174,7 @@ def fabricate_stems(tree_settings: TreeSettings, addsplinetobone, addstem, baseS
                         p2 = branch.co
                         p3 = p2 - p1
                         l = p3.length#*rotateV[n]# * uniform(.90, 1.00) # (1.0, 1.1)
-                        bL = branch.lengthPar * tree_settings.length[1] * shape_ratio(shape, (1 - branch.stemOffset) / (1 - baseSize), custom=tree_settings.customShape)
+                        bL = branch.lengthPar * tree_settings.length[1] * shape_ratio(tree_settings.shape, (1 - branch.stemOffset) / (1 - baseSize), custom=tree_settings.customShape)
                         isIntersect.append(l < bL)
 
                         d = br.co - branch.co
@@ -290,11 +290,11 @@ def fabricate_stems(tree_settings: TreeSettings, addsplinetobone, addstem, baseS
             maxbL *= l
         lMax = tree_settings.length[n] * uniform(1 - tree_settings.lengthV[n], 1 + tree_settings.lengthV[n])
         if n == 1:
-            lShape = shape_ratio(shape, (1 - p.stemOffset) / (1 - baseSize), custom=tree_settings.customShape)
-            tShape = shape_ratio(shape, 0, custom=tree_settings.customShape)
+            lShape = shape_ratio(tree_settings.shape, (1 - p.stemOffset) / (1 - baseSize), custom=tree_settings.customShape)
+            tShape = shape_ratio(tree_settings.shape, 0, custom=tree_settings.customShape)
         else:
-            lShape = shape_ratio(shapeS, (1 - p.stemOffset) / (1 - baseSize))
-            tShape = shape_ratio(shapeS, 0)
+            lShape = shape_ratio(tree_settings.shapeS, (1 - p.stemOffset) / (1 - baseSize))
+            tShape = shape_ratio(tree_settings.shapeS, 0)
         branchL = p.lengthPar * lMax * lShape
         childStems = tree_settings.branches[min(3, n + 1)] * (0.1 + 0.9 * (branchL / maxbL))
 
@@ -320,7 +320,7 @@ def fabricate_stems(tree_settings: TreeSettings, addsplinetobone, addstem, baseS
 
         if p.offset == 1:
             startRad = p.radiusPar[1]
-        endRad = (startRad * (1 - taper[n])) ** tree_settings.ratioPower
+        endRad = (startRad * (1 - tree_settings.taper[n])) ** tree_settings.ratioPower
         startRad = max(startRad, tree_settings.minRadius)
         endRad = max(endRad, tree_settings.minRadius)
         newPoint.radius = startRad
