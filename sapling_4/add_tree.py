@@ -6,6 +6,7 @@ from random import seed, uniform
 import bpy
 from mathutils import Vector
 
+from .ArmatureSettings import ArmatureSettings
 from .LeafSettings import LeafSettings
 from .TreeSettings import TreeSettings
 from .utils import to_rad, eval_bez, round_bone
@@ -33,19 +34,7 @@ def add_tree(props):
     attachment = props.attachment
 
     leaf_settings = LeafSettings(props)
-    # leafType = props.leafType
-    # leafDownAngle = radians(props.leafDownAngle)
-    # leafDownAngleV = radians(props.leafDownAngleV)
-    # leafRotate = radians(props.leafRotate)
-    # leafRotateV = radians(props.leafRotateV)
-    # leafScale = props.leafScale#
-    # leafScaleX = props.leafScaleX#
-    # leafScaleT = props.leafScaleT
-    # leafScaleV = props.leafScaleV
-    # leafShape = props.leafShape
-    # leafDupliObj = props.leafDupliObj
-    # leafangle = props.leafangle
-    # leafDist = int(props.leafDist)#
+
     bevelRes = props.bevelRes#
     resU = props.resU#
 
@@ -53,34 +42,32 @@ def add_tree(props):
     leafObjY = props.leafObjY
     leafObjZ = props.leafObjZ
 
-    useArm = props.useArm
-    previewArm = props.previewArm
-    armAnim = props.armAnim
-    leafAnim = props.leafAnim
-    frameRate = props.frameRate
-    loopFrames = props.loopFrames
+    armature_settings = ArmatureSettings(props)
+    # useArm = props.useArm
+    # previewArm = props.previewArm
+    # armAnim = props.armAnim
+    # leafAnim = props.leafAnim
+    # frameRate = props.frameRate
+    # loopFrames = props.loopFrames
 
     #windSpeed = props.windSpeed
     #windGust = props.windGust
 
-    wind = props.wind
-    gust = props.gust
-    gustF = props.gustF
-
-    af1 = props.af1
-    af2 = props.af2
-    af3 = props.af3
-
-    makeMesh = props.makeMesh
-    armLevels = props.armLevels
-    boneStep = props.boneStep
+    # wind = props.wind
+    # gust = props.gust
+    # gustF = props.gustF
+    #
+    # af1 = props.af1
+    # af2 = props.af2
+    # af3 = props.af3
+    #
+    # makeMesh = props.makeMesh
+    # armLevels = props.armLevels
+    # boneStep = props.boneStep
     matIndex = props.matIndex
 
     useOldDownAngle = props.useOldDownAngle
     useParentAngle = props.useParentAngle
-
-    if not makeMesh:
-        boneStep = [1, 1, 1, 1]
 
     #taper
     if tree_settings.autoTaper:
@@ -113,7 +100,7 @@ def add_tree(props):
     cu = bpy.data.curves.new('tree', 'CURVE')
     treeOb = bpy.data.objects.new('tree', cu)
     bpy.context.scene.collection.objects.link(treeOb)
-    if not useArm:
+    if not armature_settings.useArm:
         treeOb.location=bpy.context.scene.cursor.location
 
     cu.dimensions = '3D'
@@ -157,7 +144,7 @@ def add_tree(props):
         # If this isn't the trunk then we may have multiple stem to initialize
         else:
             # For each of the points defined in the list of stem starting points we need to grow a stem.
-            fabricate_stems(tree_settings, addsplinetobone, addstem, baseSize, childP, cu, leaf_settings.leafDist, leaves, leaf_settings.leafType, lvl, scaleVal, storeN, useOldDownAngle, useParentAngle, boneStep, matIndex)
+            fabricate_stems(tree_settings, addsplinetobone, addstem, baseSize, childP, cu, leaf_settings.leafDist, leaves, leaf_settings.leafType, lvl, scaleVal, storeN, useOldDownAngle, useParentAngle, armature_settings.boneStep, matIndex)
 
         #change base size for each level
         if lvl > 0:
@@ -168,7 +155,7 @@ def add_tree(props):
         childP = []
         # Now grow each of the stems in the list of those to be extended
         for st in stemList:
-            splineToBone = grow_branch_level(tree_settings, baseSize, childP, cu, handles, lvl, scaleVal, splineToBone, st, closeTipp, noTip, boneStep, leaves, leaf_settings.leafType, attachment, matIndex)
+            splineToBone = grow_branch_level(tree_settings, baseSize, childP, cu, handles, lvl, scaleVal, splineToBone, st, closeTipp, noTip, armature_settings.boneStep, leaves, leaf_settings.leafType, attachment, matIndex)
 
         levelCount.append(len(cu.splines))
 
@@ -269,8 +256,8 @@ def add_tree(props):
 
     leafVertSize = {'hex': 6, 'rect': 4, 'dFace': 4, 'dVert': 1}[leaf_settings.leafShape]
 
-    armLevels = min(armLevels, tree_settings.levels)
-    armLevels -= 1
+    armature_settings.armLevels = min(armature_settings.armLevels, tree_settings.levels)
+    armature_settings.armLevels -= 1
 
     # unpack vars from splineToBone
     splineToBone1 = splineToBone
@@ -281,23 +268,22 @@ def add_tree(props):
 
     # add mesh object
     treeObj = None
-    if makeMesh:
+    if armature_settings.makeMesh:
         treeMesh = bpy.data.meshes.new('treemesh')
         treeObj = bpy.data.objects.new('treemesh', treeMesh)
         bpy.context.scene.collection.objects.link(treeObj)
-        if not useArm:
+        if not armature_settings.useArm:
             treeObj.location=bpy.context.scene.cursor.location
 
     # If we need an armature we add it
-    if useArm:
+    if armature_settings.useArm:
         # Create the armature and objects
-        armOb = create_armature(armAnim, leafP, cu, frameRate, leafMesh, leafObj, leafVertSize, leaves, levelCount, splineToBone,
-                                treeOb, treeObj, wind, gust, gustF, af1, af2, af3, leafAnim, loopFrames, previewArm, armLevels, makeMesh, boneStep)
+        armOb = create_armature(armature_settings, leafP, cu, leafMesh, leafObj, leafVertSize, leaves, levelCount, splineToBone, treeOb, treeObj)
 
     #print(time.time()-startTime)
 
     #mesh branches
-    if makeMesh:
+    if armature_settings.makeMesh:
         t1 = time.time()
 
         treeVerts = []
@@ -324,7 +310,7 @@ def add_tree(props):
                     break
             level = min(level, 3)
 
-            step = boneStep[level]
+            step = armature_settings.boneStep[level]
             vindex = len(treeVerts)
 
             p1 = points[0]
@@ -353,7 +339,7 @@ def add_tree(props):
                 vert_radius.append((p1.radius, p1.radius))
 
             #dont make vertex group if above armLevels
-            if (i >= levelCount[armLevels]):
+            if (i >= levelCount[armature_settings.armLevels]):
                 idx = i
                 groupName = splineToBone[idx]
                 g = True
@@ -407,7 +393,7 @@ def add_tree(props):
 
         treeMesh.from_pydata(treeVerts, treeEdges, ())
 
-        if useArm:
+        if armature_settings.useArm:
             for group in vertexGroups:
                 treeObj.vertex_groups.new(name=group)
                 treeObj.vertex_groups[group].add(vertexGroups[group], 1.0, 'ADD')
@@ -416,9 +402,9 @@ def add_tree(props):
             treeObj.vertex_groups["Branching Level " + str(i)].add(g, 1.0, 'ADD')
 
         #add armature
-        if useArm:
+        if armature_settings.useArm:
             armMod = treeObj.modifiers.new('windSway', 'ARMATURE')
-            if previewArm:
+            if armature_settings.previewArm:
                 armOb.hide_viewport = True
                 armOb.data.display_type = 'STICK'
             armMod.object = armOb
@@ -428,7 +414,7 @@ def add_tree(props):
         #add skin modifier and set data
         skinMod = treeObj.modifiers.new('Skin', 'SKIN')
         skinMod.use_smooth_shade = True
-        if previewArm:
+        if armature_settings.previewArm:
             skinMod.show_viewport = False
         skindata = treeObj.data.skin_vertices[0].data
         for i, radius in enumerate(vert_radius):
