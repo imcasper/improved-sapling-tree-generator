@@ -6,6 +6,7 @@ from random import seed, uniform
 import bpy
 from mathutils import Vector
 
+from .TreeSettings import TreeSettings
 from .utils import toRad, evalBez, roundBone
 from .kickstart_trunk import kickstart_trunk
 from .fabricate_stems import fabricate_stems
@@ -24,53 +25,54 @@ def add_tree(props):
     seed(rseed)
 
     # Set all other variables
-    levels = props.levels#
-    length = props.length#
-    lengthV = props.lengthV#
-    taperCrown = props.taperCrown
+    tree_settings = TreeSettings(props)
+    # levels = props.levels#
+    # length = props.length#
+    # lengthV = props.lengthV#
+    # taperCrown = props.taperCrown
     branches = props.branches#
-    curveRes = props.curveRes#
-    curve = toRad(props.curve)#
-    curveV = toRad(props.curveV)#
-    curveBack = toRad(props.curveBack)#
-    baseSplits = props.baseSplits#
-    segSplits = props.segSplits#
-    splitByLen = props.splitByLen
-    rMode = props.rMode
-    splitStraight = props.splitStraight
-    splitLength = props.splitLength
-    splitAngle = toRad(props.splitAngle)#
-    splitAngleV = toRad(props.splitAngleV)#
-    scale = props.scale#
+    # curveRes = props.curveRes#
+    # curve = toRad(props.curve)#
+    # curveV = toRad(props.curveV)#
+    # curveBack = toRad(props.curveBack)#
+    # baseSplits = props.baseSplits#
+    # segSplits = props.segSplits#
+    # splitByLen = props.splitByLen
+    # rMode = props.rMode
+    # splitStraight = props.splitStraight
+    # splitLength = props.splitLength
+    # splitAngle = toRad(props.splitAngle)#
+    # splitAngleV = toRad(props.splitAngleV)#
+    # scale = props.scale#
     scaleV = props.scaleV#
-    attractUp = props.attractUp#
-    attractOut = props.attractOut
+    # attractUp = props.attractUp#
+    # attractOut = props.attractOut
     shape = int(props.shape)#
     shapeS = int(props.shapeS)#
-    customShape = props.customShape
-    branchDist = props.branchDist
+    # customShape = props.customShape
+    # branchDist = props.branchDist
     nrings = props.nrings
     baseSize = props.baseSize
-    baseSize_s = props.baseSize_s
-    leafBaseSize = props.leafBaseSize
-    splitHeight = props.splitHeight
-    splitBias = props.splitBias
-    ratio = props.ratio
-    minRadius = props.minRadius
-    closeTip = props.closeTip
-    rootFlare = props.rootFlare
-    splitRadiusRatio = props.splitRadiusRatio
-    autoTaper = props.autoTaper
+    # baseSize_s = props.baseSize_s
+    # leafBaseSize = props.leafBaseSize
+    # splitHeight = props.splitHeight
+    # splitBias = props.splitBias
+    # ratio = props.ratio
+    # minRadius = props.minRadius
+    # closeTip = props.closeTip
+    # rootFlare = props.rootFlare
+    # splitRadiusRatio = props.splitRadiusRatio
+    # autoTaper = props.autoTaper
     taper = props.taper#
     noTip = props.noTip
-    radiusTweak = props.radiusTweak
-    ratioPower = props.ratioPower#
-    downAngle = toRad(props.downAngle)#
-    downAngleV = toRad(props.downAngleV)#
-    rotate = toRad(props.rotate)#
-    rotateV = toRad(props.rotateV)#
-    scale0 = props.scale0#
-    scaleV0 = props.scaleV0#
+    # radiusTweak = props.radiusTweak
+    # ratioPower = props.ratioPower#
+    # downAngle = toRad(props.downAngle)#
+    # downAngleV = toRad(props.downAngleV)#
+    # rotate = toRad(props.rotate)#
+    # rotateV = toRad(props.rotateV)#
+    # scale0 = props.scale0#
+    # scaleV0 = props.scaleV0#
     attachment = props.attachment
     leafType = props.leafType
     leafDownAngle = radians(props.leafDownAngle)
@@ -122,8 +124,8 @@ def add_tree(props):
         boneStep = [1, 1, 1, 1]
 
     #taper
-    if autoTaper:
-        taper = find_taper(length, taper, shape, shapeS, levels, customShape)
+    if tree_settings.autoTaper:
+        taper = find_taper(tree_settings, taper, shape, shapeS)
 
     leafObj = None
 
@@ -168,7 +170,7 @@ def add_tree(props):
     # Fix the scale of the tree now
     if rseed == 0: #first tree is always average size
         scaleV = 0
-    scaleVal = scale + uniform(-scaleV, scaleV)
+    scaleVal = tree_settings.scale + uniform(-scaleV, scaleV)
     scaleVal += copysign(1e-6, scaleVal)  # Move away from zero to avoid div by zero
 
     childP = []
@@ -179,44 +181,40 @@ def add_tree(props):
     addsplinetobone = splineToBone.append
 
     # Each of the levels needed by the user we grow all the splines
-    for n in range(levels):
-        storeN = n
+    for lvl in range(tree_settings.levels):
+        storeN = lvl
         stemList = deque()
         addstem = stemList.append
-        # If n is used as an index to access parameters for the tree it must be at most 3 or it will reference outside the array index
-        n = min(3, n)
+        # If lvl is used as an index to access parameters for the tree it must be at most 3 or it will reference outside the array index
+        lvl = min(3, lvl)
         splitError = 0.0
 
         #closeTip only on last level
-        closeTipp = all([(n == levels-1), closeTip])
+        closeTipp = all([(lvl == tree_settings.levels-1), tree_settings.closeTip])
 
         # If this is the first level of growth (the trunk) then we need some special work to begin the tree
-        if n == 0:
-            kickstart_trunk(addstem, levels, leaves, branches, cu, downAngle, downAngleV, curve, curveRes, curveV, attractUp,
-                            length, lengthV, ratio, ratioPower, scale0, scaleV0, scaleVal, taper, minRadius, rootFlare, matIndex)
+        if lvl == 0:
+            kickstart_trunk(addstem, tree_settings.levels, leaves, tree_settings.branches, cu, tree_settings.downAngle, tree_settings.downAngleV, tree_settings.curve, tree_settings.curveRes, tree_settings.curveV, tree_settings.attractUp,
+                            tree_settings.length, tree_settings.lengthV, tree_settings.ratio, tree_settings.ratioPower, tree_settings.scale0, tree_settings.scaleV0, scaleVal, taper, tree_settings.minRadius, tree_settings.rootFlare, matIndex)
         # If this isn't the trunk then we may have multiple stem to initialize
         else:
             # For each of the points defined in the list of stem starting points we need to grow a stem.
-            fabricate_stems(addsplinetobone, addstem, baseSize, branches, childP, cu, curve,
-                            curveRes, curveV, attractUp, downAngle, downAngleV, leafDist, leaves, leafType, length, lengthV,
-                            levels, n, ratio, ratioPower, rotate, rotateV, scaleVal, shape, storeN,
-                            taper, shapeS, minRadius, radiusTweak, customShape, rMode, segSplits,
-                            useOldDownAngle, useParentAngle, boneStep, matIndex)
+            fabricate_stems(tree_settings, addsplinetobone, addstem, baseSize, childP, cu, leafDist, leaves, leafType, lvl, scaleVal, shape, storeN, taper, shapeS, useOldDownAngle, useParentAngle, boneStep, matIndex)
 
         #change base size for each level
-        if n > 0:
-            baseSize = baseSize_s
-        if (n == levels - 1):
-            baseSize = leafBaseSize
+        if lvl > 0:
+            baseSize = tree_settings.baseSize_s
+        if (lvl == tree_settings.levels - 1):
+            baseSize = tree_settings.leafBaseSize
 
         childP = []
         # Now grow each of the stems in the list of those to be extended
         for st in stemList:
-            splineToBone = grow_branch_level(baseSize, baseSplits, childP, cu, curve, curveBack, curveRes, handles, n, levels,
-                                             branches, scaleVal, segSplits, splineToBone, splitAngle, splitAngleV, st, branchDist,
-                                             length, splitByLen, closeTipp, splitRadiusRatio, minRadius, nrings, splitBias,
-                                             splitHeight, attractOut, rMode, splitStraight, splitLength, lengthV, taperCrown,
-                                             noTip, boneStep, rotate, rotateV, leaves, leafType, attachment, matIndex)
+            splineToBone = grow_branch_level(baseSize, tree_settings.baseSplits, childP, cu, tree_settings.curve, tree_settings.curveBack, tree_settings.curveRes, handles, lvl, tree_settings.levels,
+                                             tree_settings.branches, scaleVal, tree_settings.segSplits, splineToBone, tree_settings.splitAngle, tree_settings.splitAngleV, st, tree_settings.branchDist,
+                                             tree_settings.length, tree_settings.splitByLen, closeTipp, tree_settings.splitRadiusRatio, tree_settings.minRadius, tree_settings.nrings, tree_settings.splitBias,
+                                             tree_settings.splitHeight, tree_settings.attractOut, tree_settings.rMode, tree_settings.splitStraight, tree_settings.splitLength, tree_settings.lengthV, tree_settings.taperCrown,
+                                             noTip, boneStep, tree_settings.rotate, tree_settings.rotateV, leaves, leafType, attachment, matIndex)
 
         levelCount.append(len(cu.splines))
 
@@ -233,7 +231,7 @@ def add_tree(props):
     leafP = []
     if leaves:
         oldRot = 0.0
-        n = min(3, n+1)
+        lvl = min(3, lvl+1)
         # For each of the child points we add leaves
         for ln, cp in enumerate(childP):
             # If the special flag is set then we need to add several leaves at the same location
@@ -321,7 +319,7 @@ def add_tree(props):
 
     leafVertSize = {'hex': 6, 'rect': 4, 'dFace': 4, 'dVert': 1}[leafShape]
 
-    armLevels = min(armLevels, levels)
+    armLevels = min(armLevels, tree_settings.levels)
     armLevels -= 1
 
     # unpack vars from splineToBone
@@ -361,12 +359,12 @@ def add_tree(props):
 
         #vertex group for each level
         levelGroups = []
-        for n in range(levels):
-            treeObj.vertex_groups.new(name="Branching Level " + str(n))
+        for lvl in range(tree_settings.levels):
+            treeObj.vertex_groups.new(name="Branching Level " + str(lvl))
             levelGroups.append([])
 
-        for i, curve in enumerate(cu.splines):
-            points = curve.bezier_points
+        for i, tree_settings.curve in enumerate(cu.splines):
+            points = tree_settings.curve.bezier_points
 
             #find branching level
             level = 0
@@ -417,15 +415,15 @@ def add_tree(props):
             else:
                 g = False
 
-            for n, p2 in enumerate(points[1:]):
+            for lvl, p2 in enumerate(points[1:]):
                 if not g:
-                    groupName = 'bone' + (str(i)).rjust(3, '0') + '.' + (str(n)).rjust(3, '0')
+                    groupName = 'bone' + (str(i)).rjust(3, '0') + '.' + (str(lvl)).rjust(3, '0')
                     groupName = roundBone(groupName, step)
                     if groupName not in vertexGroups:
                         vertexGroups[groupName] = []
 
                 # parent first vert in split to parent branch bone
-                if issplit[i] and n == 0:
+                if issplit[i] and lvl == 0:
                     if g:
                         vertexGroups[groupName].append(vindex - 1)
                     else:
@@ -441,17 +439,17 @@ def add_tree(props):
                     root_vert.append(False)
                     vert_radius.append((radius, radius))
 
-                    if (isend[i]) and (n == 0) and (f == 1):
-                        edge = [parent, n * resU + f + vindex]
+                    if (isend[i]) and (lvl == 0) and (f == 1):
+                        edge = [parent, lvl * resU + f + vindex]
                     else:
-                        edge = [n * resU + f + vindex - 1, n * resU + f + vindex]
+                        edge = [lvl * resU + f + vindex - 1, lvl * resU + f + vindex]
                         #add vert to group
-                        vertexGroups[groupName].append(n * resU + f + vindex - 1)
-                        levelGroups[level].append(n * resU + f + vindex - 1)
+                        vertexGroups[groupName].append(lvl * resU + f + vindex - 1)
+                        levelGroups[level].append(lvl * resU + f + vindex - 1)
                     treeEdges.append(edge)
 
-                vertexGroups[groupName].append(n * resU + resU + vindex)
-                levelGroups[level].append(n * resU + resU + vindex)
+                vertexGroups[groupName].append(lvl * resU + resU + vindex)
+                levelGroups[level].append(lvl * resU + resU + vindex)
 
                 p1 = p2
 

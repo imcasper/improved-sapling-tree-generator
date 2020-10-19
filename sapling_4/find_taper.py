@@ -1,14 +1,15 @@
 from .shape_ratio import shape_ratio
+from .TreeSettings import TreeSettings
 
 
 # calculate taper automatically
-def find_taper(length, taper, shape, shapeS, levels, customShape):
+def find_taper(tree_settings: TreeSettings, taper, shape, shapeS):
     taperS = []
-    for i, t in enumerate(length):
+    for i, t in enumerate(tree_settings.length):
         if i == 0:
             shp = 1.0
         elif i == 1:
-            shp = shape_ratio(shape, 0, custom=customShape)
+            shp = shape_ratio(shape, 0, custom=tree_settings.customShape)
         else:
             shp = shape_ratio(shapeS, 0)
         t = t * shp
@@ -23,7 +24,7 @@ def find_taper(length, taper, shape, shapeS, levels, customShape):
 
     taperR = []
     for i, t in enumerate(taperP):
-        t = sum(taperP[i:levels])
+        t = sum(taperP[i:tree_settings.levels])
         taperR.append(t)
 
     taperT = []

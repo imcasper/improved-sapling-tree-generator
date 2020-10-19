@@ -7,11 +7,12 @@ from mathutils import Vector, Matrix
 from .utils import tau, zAxis, convertQuat, roundBone
 from .StemSpline import StemSpline
 from .shape_ratio import shape_ratio
+from .TreeSettings import TreeSettings
 
 
-def fabricate_stems(addsplinetobone, addstem, baseSize, branches, childP, cu, curve, curveRes, curveV, attractUp,
-                    downAngle, downAngleV, leafDist, leaves, leafType, length, lengthV, levels, n, ratio, ratioPower,
-                    rotate, rotateV, scaleVal, shape, storeN, taper, shapeS, minRadius, radiusTweak, customShape, rMode, segSplits,
+def fabricate_stems(tree_settings: TreeSettings, addsplinetobone, addstem, baseSize, childP, cu,
+                    leafDist, leaves, leafType, n,
+                    scaleVal, shape, storeN, taper, shapeS,
                     useOldDownAngle, useParentAngle, boneStep, matIndex):
 
     #prevent baseSize from going to 1.0
@@ -21,7 +22,7 @@ def fabricate_stems(addsplinetobone, addstem, baseSize, branches, childP, cu, cu
     oldRotate = 0
 
     #use fancy child point selection / rotation
-    if (n == 1) and (rMode != "original"):
+    if (n == 1) and (tree_settings.rMode != "original"):
         childP_T = OrderedDict()
         childP_L = []
         for i, p in enumerate(childP):
@@ -39,12 +40,12 @@ def fabricate_stems(addsplinetobone, addstem, baseSize, branches, childP, cu, cu
         childP = []
         rot_a = []
         for p in childP_T:
-            if rMode == "rotate":
-                if rotate[n] < 0.0:
-                    oldRotate = -copysign(rotate[n], oldRotate)
+            if tree_settings.rMode == "rotate":
+                if tree_settings.rotate[n] < 0.0:
+                    oldRotate = -copysign(tree_settings.rotate[n], oldRotate)
                 else:
-                    oldRotate += rotate[n]
-                bRotate = oldRotate + uniform(-rotateV[n], rotateV[n])
+                    oldRotate += tree_settings.rotate[n]
+                bRotate = oldRotate + uniform(-tree_settings.rotateV[n], tree_settings.rotateV[n])
 
                 #find center of split branches
                 #average
@@ -82,13 +83,13 @@ def fabricate_stems(addsplinetobone, addstem, baseSize, branches, childP, cu, cu
                 bD = ((b[0] * b[0] + b[1] * b[1]) ** .5)
 
                 #acount for length
-                bL = br.lengthPar * length[1] * shape_ratio(shape, (1 - br.offset) / (1 - baseSize), custom=customShape)
+                bL = br.lengthPar * tree_settings.length[1] * shape_ratio(shape, (1 - br.offset) / (1 - baseSize), custom=tree_settings.customShape)
 
                 #account for down angle
-                if downAngleV[1] > 0:
-                    downA = downAngle[n] + (-downAngleV[n] * (1 - (1 - br.offset) / (1 - baseSize)) ** 2)
+                if tree_settings.downAngleV[1] > 0:
+                    downA = tree_settings.downAngle[n] + (-tree_settings.downAngleV[n] * (1 - (1 - br.offset) / (1 - baseSize)) ** 2)
                 else:
-                    downA = downAngle[n]
+                    downA = tree_settings.downAngle[n]
                 if downA < (.5 * pi):
                     downA = sin(downA) ** 2
                     bL *= downA
@@ -104,15 +105,15 @@ def fabricate_stems(addsplinetobone, addstem, baseSize, branches, childP, cu, cu
                 childP.append(p[idx])
                 rot_a.append(a)
 
-            elif rMode == 'distance1': #distance1
+            elif tree_settings.rMode == 'distance1': #distance1
                 for i, br in enumerate(p):
-                    rotV = rotateV[n] * .5
-                    bRotate = rotate[n] * br.index
-                    bL = br.lengthPar * length[1] * shape_ratio(shape, (1 - br.stemOffset) / (1 - baseSize), custom=customShape)
-                    if downAngleV[1] > 0:
-                        downA = downAngle[n] + (-downAngleV[n] * (1 - (1 - br.stemOffset) / (1 - baseSize)) ** 2)
+                    rotV = tree_settings.rotateV[n] * .5
+                    bRotate = tree_settings.rotate[n] * br.index
+                    bL = br.lengthPar * tree_settings.length[1] * shape_ratio(shape, (1 - br.stemOffset) / (1 - baseSize), custom=tree_settings.customShape)
+                    if tree_settings.downAngleV[1] > 0:
+                        downA = tree_settings.downAngle[n] + (-tree_settings.downAngleV[n] * (1 - (1 - br.stemOffset) / (1 - baseSize)) ** 2)
                     else:
-                        downA = downAngle[n]
+                        downA = tree_settings.downAngle[n]
 
                     downRotMat = Matrix.Rotation(downA, 3, 'X')
                     rotMat = Matrix.Rotation(bRotate, 3, 'Z')
@@ -130,7 +131,7 @@ def fabricate_stems(addsplinetobone, addstem, baseSize, branches, childP, cu, cu
                         p2 = branch.co
                         p3 = p2 - p1
                         l = p3.length * uniform(1.0, 1.1)
-                        bL = branch.lengthPar * length[1] * shape_ratio(shape, (1 - branch.stemOffset) / (1 - baseSize), custom=customShape)
+                        bL = branch.lengthPar * tree_settings.length[1] * shape_ratio(shape, (1 - branch.stemOffset) / (1 - baseSize), custom=tree_settings.customShape)
                         isIntersect.append(l < bL)
 
                     del isIntersect[i]
@@ -139,20 +140,20 @@ def fabricate_stems(addsplinetobone, addstem, baseSize, branches, childP, cu, cu
                         childP.append(br)
                         rot_a.append(bRotate + uniform(-rotV, rotV))
 
-            elif rMode == 'distance': #distance2
-                bRotate = oldRotate + rotate[n]
+            elif tree_settings.rMode == 'distance': #distance2
+                bRotate = oldRotate + tree_settings.rotate[n]
 
                 cP = []
                 rA = []
                 bN = []
                 for i, br in enumerate(p):
-                    rotV = uniform(-rotateV[n]*.5, rotateV[n]*.5)
+                    rotV = uniform(-tree_settings.rotateV[n]*.5, tree_settings.rotateV[n]*.5)
 
-                    bL = br.lengthPar * length[1] * shape_ratio(shape, (1 - br.stemOffset) / (1 - baseSize), custom=customShape)
-                    if downAngleV[1] > 0:
-                        downA = downAngle[n] + (-downAngleV[n] * (1 - (1 - br.stemOffset) / (1 - baseSize)) ** 2)
+                    bL = br.lengthPar * tree_settings.length[1] * shape_ratio(shape, (1 - br.stemOffset) / (1 - baseSize), custom=tree_settings.customShape)
+                    if tree_settings.downAngleV[1] > 0:
+                        downA = tree_settings.downAngle[n] + (-tree_settings.downAngleV[n] * (1 - (1 - br.stemOffset) / (1 - baseSize)) ** 2)
                     else:
-                        downA = downAngle[n]
+                        downA = tree_settings.downAngle[n]
 
                     downRotMat = Matrix.Rotation(downA, 3, 'X')
                     bRotate = bRotate + rotV
@@ -173,7 +174,7 @@ def fabricate_stems(addsplinetobone, addstem, baseSize, branches, childP, cu, cu
                         p2 = branch.co
                         p3 = p2 - p1
                         l = p3.length#*rotateV[n]# * uniform(.90, 1.00) # (1.0, 1.1)
-                        bL = branch.lengthPar * length[1] * shape_ratio(shape, (1 - branch.stemOffset) / (1 - baseSize), custom=customShape)
+                        bL = branch.lengthPar * tree_settings.length[1] * shape_ratio(shape, (1 - branch.stemOffset) / (1 - baseSize), custom=tree_settings.customShape)
                         isIntersect.append(l < bL)
 
                         d = br.co - branch.co
@@ -221,7 +222,7 @@ def fabricate_stems(addsplinetobone, addstem, baseSize, branches, childP, cu, cu
                         childP.append(nearcP[i])
                         rot_a.append(nearrA[i])
 
-                oldRotate += rotate[n]
+                oldRotate += tree_settings.rotate[n]
 
             else:
                 idx = randint(0, len(p)-1)
@@ -241,31 +242,31 @@ def fabricate_stems(addsplinetobone, addstem, baseSize, branches, childP, cu, cu
         tempPos = zAxis.copy()
         # If the -ve flag for downAngle is used we need a special formula to find it
         if useOldDownAngle:
-            if downAngleV[n] < 0.0:
-                downV = downAngleV[n] * (1 - 2 * (.2 + .8 * ((1 - p.offset) / (1 - baseSize))))
+            if tree_settings.downAngleV[n] < 0.0:
+                downV = tree_settings.downAngleV[n] * (1 - 2 * (.2 + .8 * ((1 - p.offset) / (1 - baseSize))))
             # Otherwise just find a random value
             else:
-                downV = uniform(-downAngleV[n], downAngleV[n])
+                downV = uniform(-tree_settings.downAngleV[n], tree_settings.downAngleV[n])
         else:
-            if downAngleV[n] < 0.0:
-                downV = uniform(-downAngleV[n], downAngleV[n])
+            if tree_settings.downAngleV[n] < 0.0:
+                downV = uniform(-tree_settings.downAngleV[n], tree_settings.downAngleV[n])
             else:
-                downV = -downAngleV[n] * (1 - (1 - p.stemOffset) / (1 - baseSize)) ** 2 #(110, 80) = (60, -50)
+                downV = -tree_settings.downAngleV[n] * (1 - (1 - p.stemOffset) / (1 - baseSize)) ** 2 #(110, 80) = (60, -50)
 
         if p.offset == 1:
             downRotMat = Matrix.Rotation(0, 3, 'X')
         else:
-            downRotMat = Matrix.Rotation(downAngle[n] + downV, 3, 'X')
+            downRotMat = Matrix.Rotation(tree_settings.downAngle[n] + downV, 3, 'X')
 
         # If the -ve flag for rotate is used we need to find which side of the stem the last child point was and then grow in the opposite direction.
-        if rotate[n] < 0.0:
-            oldRotate = -copysign(rotate[n], oldRotate)
+        if tree_settings.rotate[n] < 0.0:
+            oldRotate = -copysign(tree_settings.rotate[n], oldRotate)
         # Otherwise just generate a random number in the specified range
         else:
-            oldRotate += rotate[n]
-        bRotate = oldRotate + uniform(-rotateV[n], rotateV[n])
+            oldRotate += tree_settings.rotate[n]
+        bRotate = oldRotate + uniform(-tree_settings.rotateV[n], tree_settings.rotateV[n])
 
-        if (n == 1) and  (rMode in ["rotate", 'distance']):
+        if (n == 1) and  (tree_settings.rMode in ["rotate", 'distance']):
             bRotate = rot_a[i]
 
         rotMat = Matrix.Rotation(bRotate, 3, 'Z')
@@ -285,20 +286,20 @@ def fabricate_stems(addsplinetobone, addstem, baseSize, branches, childP, cu, cu
 
         # Find branch length and the number of child stems.
         maxbL = scaleVal
-        for l in length[:n+1]:
+        for l in tree_settings.length[:n+1]:
             maxbL *= l
-        lMax = length[n] * uniform(1 - lengthV[n], 1 + lengthV[n])
+        lMax = tree_settings.length[n] * uniform(1 - tree_settings.lengthV[n], 1 + tree_settings.lengthV[n])
         if n == 1:
-            lShape = shape_ratio(shape, (1 - p.stemOffset) / (1 - baseSize), custom=customShape)
-            tShape = shape_ratio(shape, 0, custom=customShape)
+            lShape = shape_ratio(shape, (1 - p.stemOffset) / (1 - baseSize), custom=tree_settings.customShape)
+            tShape = shape_ratio(shape, 0, custom=tree_settings.customShape)
         else:
             lShape = shape_ratio(shapeS, (1 - p.stemOffset) / (1 - baseSize))
             tShape = shape_ratio(shapeS, 0)
         branchL = p.lengthPar * lMax * lShape
-        childStems = branches[min(3, n + 1)] * (0.1 + 0.9 * (branchL / maxbL))
+        childStems = tree_settings.branches[min(3, n + 1)] * (0.1 + 0.9 * (branchL / maxbL))
 
         # If this is the last level before leaves then we need to generate the child points differently
-        if (storeN == levels - 1):
+        if (storeN == tree_settings.levels - 1):
             if leafType == '4':
                 childStems = 0 #False
             else:
@@ -311,7 +312,7 @@ def fabricate_stems(addsplinetobone, addstem, baseSize, branches, childP, cu, cu
         #ratio = (p.radiusPar[0] - p.radiusPar[2]) / p.lengthPar
         #startRad = min(((ratio * branchL) ** ratioPower) * radiusTweak[n], p.radiusPar[1])#p.radiusPar[1] #10
 
-        startRad = min(((p.radiusPar[2] * (1/tShape) * lShape) ** ratioPower) * radiusTweak[n], p.radiusPar[1])
+        startRad = min(((p.radiusPar[2] * (1/tShape) * lShape) ** tree_settings.ratioPower) * tree_settings.radiusTweak[n], p.radiusPar[1])
 
         #p.radiusPar[0] is parent start radius
         #p.radiusPar[1] is parent radius
@@ -319,16 +320,16 @@ def fabricate_stems(addsplinetobone, addstem, baseSize, branches, childP, cu, cu
 
         if p.offset == 1:
             startRad = p.radiusPar[1]
-        endRad = (startRad * (1 - taper[n])) ** ratioPower
-        startRad = max(startRad, minRadius)
-        endRad = max(endRad, minRadius)
+        endRad = (startRad * (1 - taper[n])) ** tree_settings.ratioPower
+        startRad = max(startRad, tree_settings.minRadius)
+        endRad = max(endRad, tree_settings.minRadius)
         newPoint.radius = startRad
 
         # stem curvature
-        curveVal = curve[n] / curveRes[n]
+        curveVal = tree_settings.curve[n] / tree_settings.curveRes[n]
 
         # Add the new stem to list of stems to grow and define which bone it will be parented to
-        nstem = StemSpline(newSpline, curveVal, curveV[n], attractUp[n], 0, curveRes[n], branchL / curveRes[n], childStems,
+        nstem = StemSpline(newSpline, curveVal, tree_settings.curveV[n], tree_settings.attractUp[n], 0, tree_settings.curveRes[n], branchL / tree_settings.curveRes[n], childStems,
                            startRad, endRad, len(cu.splines) - 1, 0, p.quat)
         if (n == 1) and (p.offset == 1):
             nstem.isFirstTip = True
