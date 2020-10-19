@@ -6,15 +6,20 @@ from mathutils import Matrix, Euler
 
 from .utils import declination, angle_mean, convert_quat, zAxis, tau, xAxis, curve_up, round_bone
 from .StemSpline import StemSpline
+from .TreeSettings import TreeSettings
 
 
 # This is the function which extends (or grows) a given stem.
-def grow_spline(n, stem, numSplit, splitAng, splitAngV, splitStraight, splineList, hType, splineToBone, closeTip, splitRadiusRatio,
-                minRadius, kp, splitHeight, outAtt, splitLength, lenVar, taperCrown, boneStep, rotate, rotateV, matIndex):
-
+def grow_spline(tree_settings: TreeSettings, n, stem, numSplit, splineList, splineToBone, closeTip, kp, boneStep):
+    outAtt = tree_settings.attractOut[n]
+    splitAng = tree_settings.splitAngle[n]
+    splitAngV = tree_settings.splitAngleV[n]
+    splitLength = tree_settings.splitLength
+    lenVar = tree_settings.lengthV[n]
+    hType = tree_settings.handles
     #curv at base
     sCurv = stem.curv
-    if (n == 0) and (kp <= splitHeight):
+    if (n == 0) and (kp <= tree_settings.splitHeight):
         sCurv = 0.0
 
     curveangle = sCurv + (uniform(0, stem.curvV) * kp * stem.curvSignx)
@@ -31,7 +36,7 @@ def grow_spline(n, stem, numSplit, splitAng, splitAngV, splitStraight, splineLis
     if n == 0:
         dec = declination(dir) / 180
         dec = dec ** 2
-        tf = 1 - (dec * taperCrown * 30)
+        tf = 1 - (dec * tree_settings.taperCrown * 30)
         tf = max(.1, tf)
     else:
         tf = 1.0
@@ -73,14 +78,14 @@ def grow_spline(n, stem, numSplit, splitAng, splitAngV, splitStraight, splineLis
         spreadangle = stem.splitSignx * (splitAng + uniform(-splitAngV, splitAngV))
         stem.splitSignx = -stem.splitSignx
 
-        branchStraightness = splitStraight#0
+        branchStraightness = tree_settings.splitStraight#0
         if n == 0:
-            branchStraightness = splitStraight
+            branchStraightness = tree_settings.splitStraight
 
         if not hasattr(stem, 'rLast'):
             stem.rLast = radians(uniform(0, 360))
 
-        br = rotate[0] + uniform(-rotateV[0], rotateV[0])
+        br = tree_settings.rotate[0] + uniform(-tree_settings.rotateV[0], tree_settings.rotateV[0])
         branchRot = stem.rLast + br
         branchRotMat = Matrix.Rotation(branchRot, 3, 'Z')
         stem.rLast = branchRot
@@ -93,9 +98,9 @@ def grow_spline(n, stem, numSplit, splitAng, splitAngV, splitStraight, splineLis
             bScale = min(lenV, 1)
 
             #split radius factor
-            splitR = splitRadiusRatio #0.707 #sqrt(1/(numSplit+1))
+            splitR = tree_settings.splitRadiusRatio #0.707 #sqrt(1/(numSplit+1))
 
-            if splitRadiusRatio == 0:
+            if tree_settings.splitRadiusRatio == 0:
                 splitR1 = sqrt(.5 * bScale)
                 splitR2 = sqrt(1 - (.5 * bScale))
 #            elif splitRadiusRatio == -1:
@@ -112,11 +117,11 @@ def grow_spline(n, stem, numSplit, splitAng, splitAngV, splitStraight, splineLis
                 splitR2 = splitR
 
             newSpline = cu.splines.new('BEZIER')
-            newSpline.material_index = matIndex[n]
+            newSpline.material_index = tree_settings.matIndex[n]
             newPoint = newSpline.bezier_points[-1]
             (newPoint.co, newPoint.handle_left_type, newPoint.handle_right_type) = (stem.p.co, 'VECTOR', 'VECTOR')
             newRadius = (stem.radS*(1 - stem.seg/stem.segMax) + stem.radE*(stem.seg/stem.segMax)) * splitR1
-            newRadius = max(newRadius, minRadius)
+            newRadius = max(newRadius, tree_settings.minRadius)
             newPoint.radius = newRadius
 
             # Here we make the new "sprouting" stems diverge from the current direction
@@ -164,9 +169,9 @@ def grow_spline(n, stem, numSplit, splitAng, splitAngV, splitStraight, splineLis
             (newPoint.co, newPoint.handle_left_type, newPoint.handle_right_type) = (end_co + dirVec, hType, hType)
 
             newRadius = (stem.radS*(1 - (stem.seg + 1)/stem.segMax) + stem.radE*((stem.seg + 1)/stem.segMax)) * splitR1
-            newRadius = max(newRadius, minRadius)
-            nRadS = max(stem.radS * splitR1, minRadius)
-            nRadE = max(stem.radE * splitR1, minRadius)
+            newRadius = max(newRadius, tree_settings.minRadius)
+            nRadS = max(stem.radS * splitR1, tree_settings.minRadius)
+            nRadE = max(stem.radE * splitR1, tree_settings.minRadius)
             if (stem.seg == stem.segMax-1) and closeTip:
                 newRadius = 0.0
             newPoint.radius = newRadius
@@ -236,9 +241,9 @@ def grow_spline(n, stem, numSplit, splitAng, splitAngV, splitStraight, splineLis
 
     newRadius = stem.radS*(1 - (stem.seg + 1)/stem.segMax) + stem.radE*((stem.seg + 1)/stem.segMax)
     if numSplit > 0:
-        newRadius = max(newRadius * splitR2, minRadius)
-        stem.radS = max(stem.radS * splitR2, minRadius)
-        stem.radE = max(stem.radE * splitR2, minRadius)
+        newRadius = max(newRadius * splitR2, tree_settings.minRadius)
+        stem.radS = max(stem.radS * splitR2, tree_settings.minRadius)
+        stem.radE = max(stem.radE * splitR2, tree_settings.minRadius)
     newRadius = max(newRadius, stem.radE)
     if (stem.seg == stem.segMax-1) and closeTip:
         newRadius = 0.0

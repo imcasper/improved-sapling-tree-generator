@@ -41,22 +41,6 @@ def add_tree(props):
 
     leafObj = None
 
-    # Some effects can be turned ON and OFF, the necessary variables are changed here
-    if not props.bevel:
-        bevelDepth = 0.0
-    else:
-        bevelDepth = 1.0
-
-    if not props.showLeaves:
-        leaves = 0
-    else:
-        leaves = props.leaves
-
-    if props.handleType == '0':
-        handles = 'AUTO'
-    else:
-        handles = 'VECTOR'
-
     for ob in bpy.data.objects:
         ob.select_set(state=False)
 
@@ -69,7 +53,7 @@ def add_tree(props):
 
     cu.dimensions = '3D'
     cu.fill_mode = 'FULL'
-    cu.bevel_depth = bevelDepth
+    cu.bevel_depth = tree_settings.bevelDepth
     cu.bevel_resolution = tree_settings.bevelRes
     #cu.use_uv_as_generated = True # removed 2.82
 
@@ -104,11 +88,11 @@ def add_tree(props):
 
         # If this is the first level of growth (the trunk) then we need some special work to begin the tree
         if lvl == 0:
-            kickstart_trunk(tree_settings, addstem, leaves, cu, scaleVal)
+            kickstart_trunk(tree_settings, addstem, leaf_settings.leaves, cu, scaleVal)
         # If this isn't the trunk then we may have multiple stem to initialize
         else:
             # For each of the points defined in the list of stem starting points we need to grow a stem.
-            fabricate_stems(tree_settings, addsplinetobone, addstem, baseSize, childP, cu, leaf_settings.leafDist, leaves, leaf_settings.leafType, lvl, scaleVal, storeN, armature_settings.boneStep)
+            fabricate_stems(tree_settings, addsplinetobone, addstem, baseSize, childP, cu, leaf_settings.leafDist, leaf_settings.leaves, leaf_settings.leafType, lvl, scaleVal, storeN, armature_settings.boneStep)
 
         #change base size for each level
         if lvl > 0:
@@ -119,7 +103,7 @@ def add_tree(props):
         childP = []
         # Now grow each of the stems in the list of those to be extended
         for st in stemList:
-            splineToBone = grow_branch_level(tree_settings, baseSize, childP, cu, handles, lvl, scaleVal, splineToBone, st, closeTipp, noTip, armature_settings.boneStep, leaves, leaf_settings.leafType, attachment)
+            splineToBone = grow_branch_level(tree_settings, baseSize, childP, cu, lvl, scaleVal, splineToBone, st, closeTipp, noTip, armature_settings.boneStep, leaf_settings.leaves, leaf_settings.leafType, attachment)
 
         levelCount.append(len(cu.splines))
 
@@ -127,7 +111,7 @@ def add_tree(props):
     cu.resolution_u = tree_settings.resU
 
     # If we need to add leaves, we do it here
-    leafMesh, leafObj, leafP, leafVertSize = add_leafs(childP, leafObj, leaf_settings, leaves, lvl, treeOb)
+    leafMesh, leafObj, leafP, leafVertSize = add_leafs(childP, leafObj, leaf_settings, lvl, treeOb)
 
     armature_settings.armLevels = min(armature_settings.armLevels, tree_settings.levels)
     armature_settings.armLevels -= 1
@@ -148,7 +132,7 @@ def add_tree(props):
     # If we need an armature we add it
     if armature_settings.useArm:
         # Create the armature and objects
-        armOb = create_armature(armature_settings, leafP, cu, leafMesh, leafObj, leafVertSize, leaves, levelCount, splineToBone, treeOb, treeObj)
+        armOb = create_armature(armature_settings, leafP, cu, leafMesh, leafObj, leafVertSize, leaf_settings.leaves, levelCount, splineToBone, treeOb, treeObj)
 
     #print(time.time()-startTime)
 

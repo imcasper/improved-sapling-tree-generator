@@ -5,22 +5,21 @@ from .gen_leaf_mesh import gen_leaf_mesh
 from .ChildPoint import ChildPoint
 
 
-def add_leafs(childP: ChildPoint, leafObj, leaf_settings, leaves, lvl, treeOb):
+def add_leafs(childP: ChildPoint, leafObj, leaf_settings, lvl, treeOb):
     leafVerts = []
     leafFaces = []
     leafNormals = []
     leafMesh = None  # in case we aren't creating leaves, we'll still have the variable
     leafP = []
 
-
-    def leafy(old_rotation, cp: ChildPoint):
-        (vertTemp, faceTemp, normal, old_rotation) = gen_leaf_mesh(leaf_settings, cp.co, cp.quat, cp.offset, len(leafVerts), old_rotation)
+    def leafy(old_rotation, cp: ChildPoint, ln):
+        (vertTemp, faceTemp, normal, old_rotation) = gen_leaf_mesh(leaf_settings, cp.co, cp.quat, cp.offset, len(leafVerts), old_rotation, leaf_settings.leaves, ln)
         leafVerts.extend(vertTemp)
         leafFaces.extend(faceTemp)
         leafNormals.extend(normal)
         leafP.append(cp)
 
-    if leaves:
+    if leaf_settings.leaves:
         oldRot = 0.0
         lvl = min(3, lvl + 1)
         # For each of the child points we add leaves
@@ -28,11 +27,11 @@ def add_leafs(childP: ChildPoint, leafObj, leaf_settings, leaves, lvl, treeOb):
             # If the special flag is set then we need to add several leaves at the same location
             if leaf_settings.leafType == '4':
                 oldRot = -leaf_settings.leafRotate / 2
-                for g in range(abs(leaves)):
-                    leafy(oldRot, cp)
+                for g in range(abs(leaf_settings.leaves)):
+                    leafy(oldRot, cp, ln)
             # Otherwise just add the leaves like splines.
             else:
-                leafy(oldRot, cp)
+                leafy(oldRot, cp, ln)
 
         # Create the leaf mesh and object, add geometry using from_pydata, edges are currently added by validating the mesh which isn't great
         leafMesh = bpy.data.meshes.new('leaves')

@@ -1,7 +1,7 @@
 import time
 from collections import OrderedDict
 
-from sapling_4 import eval_bez, round_bone
+from .utils import eval_bez, round_bone
 
 
 def make_armature_mesh(armOb, armature_settings, cu, levelCount, splineToBone,

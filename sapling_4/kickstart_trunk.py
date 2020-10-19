@@ -10,7 +10,7 @@ from .TreeSettings import TreeSettings
 
 def kickstart_trunk(tree_settings: TreeSettings, addstem, leaves, cu, scaleVal):
     newSpline = cu.splines.new('BEZIER')
-    newSpline.material_index = matIndex[0]
+    newSpline.material_index = tree_settings.matIndex[0]
     newPoint = newSpline.bezier_points[-1]
     newPoint.co = Vector((0, 0, 0))
 

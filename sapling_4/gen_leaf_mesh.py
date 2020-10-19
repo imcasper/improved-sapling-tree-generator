@@ -7,7 +7,7 @@ from .utils import zAxis
 from .LeafSettings import LeafSettings
 
 
-def gen_leaf_mesh(leaf_settings: LeafSettings, loc, quat, offset, index, oldRot, leaves, ln, leafObjRot):
+def gen_leaf_mesh(leaf_settings: LeafSettings, loc, quat, offset, index, oldRot, leaves, ln):
     leafScale = leaf_settings.leafScale
     downAngle = leaf_settings.leafDownAngle
     downAngleV = leaf_settings.leafDownAngleV
@@ -114,7 +114,7 @@ def gen_leaf_mesh(leaf_settings: LeafSettings, loc, quat, offset, index, oldRot,
         v.x *= leaf_settings.leafScaleX*leafScale
 
         if leaf_settings.leafShape in ['dVert', 'dFace']:
-            v.rotate(leafObjRot)
+            v.rotate(leaf_settings.leafObjRot)
 
         v.rotate(Euler((0, 0, radians(180))))
 
