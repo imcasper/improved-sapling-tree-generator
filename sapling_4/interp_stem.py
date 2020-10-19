@@ -1,39 +1,39 @@
 from collections import deque
 
-from .utils import evalBez, evalBezTan
+from .utils import eval_bez, eval_bez_tan
 from .ChildPoint import ChildPoint
 
 
-def interp_stem(stem, tVals, maxOffset, baseSize):
+def interp_stem(stem, t_vals, max_offset, base_size):
     points = stem.spline.bezier_points
-    numSegs = len(points) - 1
-    stemLen = stem.segL * numSegs
+    num_segments = len(points) - 1
+    stem_len = stem.segL * num_segments
 
-    checkBottom = stem.offsetLen / maxOffset
-    checkTop = checkBottom + (stemLen / maxOffset)
+    check_bottom = stem.offsetLen / max_offset
+    check_top = check_bottom + (stem_len / max_offset)
 
     # Loop through all the parametric values to be determined
-    tempList = deque()
-    for t in tVals:
-        if (t >= checkBottom) and (t <= checkTop) and (t < 1.0):
-            scaledT = (t - checkBottom) / (checkTop - checkBottom)
-            ofst = ((t - baseSize) / (checkTop - baseSize)) * (1 - baseSize) + baseSize
+    temp_list = deque()
+    for t in t_vals:
+        if (t >= check_bottom) and (t <= check_top) and (t < 1.0):
+            scaledT = (t - check_bottom) / (check_top - check_bottom)
+            ofst = ((t - base_size) / (check_top - base_size)) * (1 - base_size) + base_size
 
-            length = numSegs * scaledT
+            length = num_segments * scaledT
             index = int(length)
-            tTemp = length - index
+            t_temp = length - index
 
-            coord = evalBez(points[index].co, points[index].handle_right, points[index+1].handle_left, points[index+1].co, tTemp)
-            quat = (evalBezTan(points[index].co, points[index].handle_right, points[index+1].handle_left, points[index+1].co, tTemp)).to_track_quat('Z', 'Y')
-            radius = (1-tTemp)*points[index].radius + tTemp*points[index+1].radius # radius at the child point
+            coord = eval_bez(points[index].co, points[index].handle_right, points[index + 1].handle_left, points[index + 1].co, t_temp)
+            quat = (eval_bez_tan(points[index].co, points[index].handle_right, points[index + 1].handle_left, points[index + 1].co, t_temp)).to_track_quat('Z', 'Y')
+            radius = (1-t_temp)*points[index].radius + t_temp*points[index+1].radius # radius at the child point
 
-            tempList.append(ChildPoint(coord, quat, (stem.radS, radius, stem.radE), t, ofst, stem.segMax * stem.segL, 'bone' + (str(stem.splN).rjust(3, '0')) + '.' + (str(index).rjust(3, '0'))))
+            temp_list.append(ChildPoint(coord, quat, (stem.radS, radius, stem.radE), t, ofst, stem.segMax * stem.segL, 'bone' + (str(stem.splN).rjust(3, '0')) + '.' + (str(index).rjust(3, '0'))))
         elif t == 1:
             #add stems at tip
-            index = numSegs-1
+            index = num_segments-1
             coord = points[-1].co
             quat = (points[-1].handle_right - points[-1].co).to_track_quat('Z', 'Y')
             radius = points[-1].radius
-            tempList.append(ChildPoint(coord, quat, (stem.radS, radius, stem.radE), 1, 1, stem.segMax * stem.segL, 'bone' + (str(stem.splN).rjust(3, '0')) + '.' + (str(index).rjust(3, '0'))))
+            temp_list.append(ChildPoint(coord, quat, (stem.radS, radius, stem.radE), 1, 1, stem.segMax * stem.segL, 'bone' + (str(stem.splN).rjust(3, '0')) + '.' + (str(index).rjust(3, '0'))))
 
-    return tempList
+    return temp_list

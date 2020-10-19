@@ -8,7 +8,7 @@ from .find_child_points import find_child_points, find_child_points2, find_child
 from .TreeSettings import TreeSettings
 
 
-def grow_branch_level(tree_settings: TreeSettings, baseSize, baseSplits, childP, cu, handles, n, branches, scaleVal, splineToBone, st, closeTip, noTip, boneStep, leaves, leafType, attachment, matIndex):
+def grow_branch_level(tree_settings: TreeSettings, baseSize, childP, cu, handles, n, scaleVal, splineToBone, st, closeTip, noTip, boneStep, leaves, leafType, attachment, matIndex):
     # Initialise the spline list of split stems in the current branch
     splineList = [st]
     # For each of the segments of the stem which must be grown we have to add to each spline in splineList

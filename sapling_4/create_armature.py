@@ -5,7 +5,7 @@ from random import uniform
 import bpy
 from mathutils import Vector
 
-from .utils import tau, roundBone
+from .utils import tau, round_bone
 
 
 def create_armature(armAnim, leafP, cu, frameRate, leafMesh, leafObj, leafVertSize, leaves, levelCount, splineToBone,
@@ -200,7 +200,7 @@ def create_armature(armAnim, leafP, cu, frameRate, leafMesh, leafObj, leafVertSi
         vertexGroups = OrderedDict()
         for i, cp in enumerate(leafP):
             # find leafs parent bone
-            leafParent = roundBone(cp.parBone, boneStep[armLevels])
+            leafParent = round_bone(cp.parBone, boneStep[armLevels])
             idx = int(leafParent[4:-4])
             while leafParent not in bonelist:
                 #find parent bone of parent bone

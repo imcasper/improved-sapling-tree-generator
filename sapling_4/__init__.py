@@ -19,7 +19,7 @@
 #======================= END GPL LICENSE BLOCK ========================
 import time
 from math import ceil
-
+import sapling_4
 from bpy.props import FloatVectorProperty, IntVectorProperty, FloatProperty, BoolProperty, EnumProperty, IntProperty, StringProperty
 
 from .ExportData import ExportData
@@ -27,8 +27,8 @@ from .ImportData import ImportData
 from .PresetMenu import PresetMenu
 from .add_tree import add_tree
 from .get_preset_paths import get_preset_paths
-from .utils import splits, splits2, splits3, declination, curveUp, curveDown, evalBez, evalBezTan, roundBone, \
-    toRad, anglemean, convertQuat
+from .utils import splits, splits2, splits3, declination, curve_up, curve_down, eval_bez, eval_bez_tan, round_bone, \
+    to_rad, angle_mean, convert_quat
 
 
 import bpy
@@ -46,12 +46,12 @@ bl_info = {
     "category": "Add Curve"}
 ##"Originally based on the method presented by Jason Weber & Joseph Penn in their paper 'Creation and Rendering of Realistic Trees'."##
 
-# if "bpy" in locals():
-#     import importlib
-#     importlib.reload(utils)
-# else:
-#     import bpy
-#     import bpy.types
+if "bpy" in locals():
+    import importlib
+    importlib.reload(sapling_4)
+else:
+    import bpy
+    import bpy.types
     # from sapling_4 import utils
     # from sapling_4.get_preset_paths import get_preset_paths
     # from sapling_4.add_tree import add_tree

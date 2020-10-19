@@ -4,7 +4,7 @@ from random import uniform, choice, randint
 
 from mathutils import Vector, Matrix
 
-from .utils import tau, zAxis, convertQuat, roundBone
+from .utils import tau, zAxis, convert_quat, round_bone
 from .StemSpline import StemSpline
 from .shape_ratio import shape_ratio
 from .TreeSettings import TreeSettings
@@ -121,7 +121,7 @@ def fabricate_stems(tree_settings: TreeSettings, addsplinetobone, addstem, baseS
                     bVec = zAxis.copy()
                     bVec.rotate(downRotMat)
                     bVec.rotate(rotMat)
-                    bVec.rotate(convertQuat(br.quat))
+                    bVec.rotate(convert_quat(br.quat))
                     bVec *= bL
                     p1 = bVec + br.co
 
@@ -162,7 +162,7 @@ def fabricate_stems(tree_settings: TreeSettings, addsplinetobone, addstem, baseS
                     bVec = zAxis.copy()
                     bVec.rotate(downRotMat)
                     bVec.rotate(rotMat)
-                    bVec.rotate(convertQuat(br.quat))
+                    bVec.rotate(convert_quat(br.quat))
                     bVec *= bL
                     p1 = bVec + br.co
 
@@ -278,7 +278,7 @@ def fabricate_stems(tree_settings: TreeSettings, addsplinetobone, addstem, baseS
         #use quat angle
         if (n == 1) and (p.offset != 1):
             if useParentAngle:
-                tempPos.rotate(convertQuat(p.quat))
+                tempPos.rotate(convert_quat(p.quat))
         else:
             tempPos.rotate(p.quat)
 
@@ -335,7 +335,7 @@ def fabricate_stems(tree_settings: TreeSettings, addsplinetobone, addstem, baseS
             nstem.isFirstTip = True
         addstem(nstem)
 
-        bone = roundBone(p.parBone, boneStep[n-1])
+        bone = round_bone(p.parBone, boneStep[n - 1])
         if p.offset == 1:
             isend = True
         else:

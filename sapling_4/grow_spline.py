@@ -4,7 +4,7 @@ from random import uniform, choice
 import bpy
 from mathutils import Matrix, Euler
 
-from .utils import declination, anglemean, convertQuat, zAxis, tau, xAxis, curveUp, roundBone
+from .utils import declination, angle_mean, convert_quat, zAxis, tau, xAxis, curve_up, round_bone
 from .StemSpline import StemSpline
 
 
@@ -42,12 +42,12 @@ def grow_spline(n, stem, numSplit, splitAng, splitAngV, splitStraight, splineLis
         p = stem.p.co.copy()
         d = atan2(p[0], -p[1])# + tau
         edir = dir.to_euler('XYZ', Euler((0, 0, d), 'XYZ'))
-        d = anglemean(edir[2], d, (kp * outAtt))
+        d = angle_mean(edir[2], d, (kp * outAtt))
         dirv = Euler((edir[0], edir[1], d), 'XYZ')
         dir = dirv.to_quaternion()
 
     if n == 0:
-        dir = convertQuat(dir)
+        dir = convert_quat(dir)
 
     if n != 0:
         splitLength = 0
@@ -143,7 +143,7 @@ def grow_spline(n, stem, numSplit, splitAng, splitAngV, splitStraight, splineLis
             # Introduce upward curvature
             upRotAxis = xAxis.copy()
             upRotAxis.rotate(dirVec.to_track_quat('Z', 'Y'))
-            curveUpAng = curveUp(stem.vertAtt, dirVec.to_track_quat('Z', 'Y'), stem.segMax)
+            curveUpAng = curve_up(stem.vertAtt, dirVec.to_track_quat('Z', 'Y'), stem.segMax)
             upRotMat = Matrix.Rotation(-curveUpAng, 3, upRotAxis)
             dirVec.rotate(upRotMat)
 
@@ -181,7 +181,7 @@ def grow_spline(n, stem, numSplit, splitAng, splitAngV, splitStraight, splineLis
                 nstem.isFirstTip = True
             splineList.append(nstem)
             bone = 'bone'+(str(stem.splN)).rjust(3, '0')+'.'+(str(len(stem.spline.bezier_points)-2)).rjust(3, '0')
-            bone = roundBone(bone, boneStep[n])
+            bone = round_bone(bone, boneStep[n])
             splineToBone.append((bone, False, True, len(stem.spline.bezier_points)-2))
 
         # The original spline also needs to keep growing so adjust its direction too
@@ -220,7 +220,7 @@ def grow_spline(n, stem, numSplit, splitAng, splitAngV, splitStraight, splineLis
     # Introduce upward curvature
     upRotAxis = xAxis.copy()
     upRotAxis.rotate(dirVec.to_track_quat('Z', 'Y'))
-    curveUpAng = curveUp(stem.vertAtt, dirVec.to_track_quat('Z', 'Y'), stem.segMax)
+    curveUpAng = curve_up(stem.vertAtt, dirVec.to_track_quat('Z', 'Y'), stem.segMax)
     upRotMat = Matrix.Rotation(-curveUpAng, 3, upRotAxis)
     dirVec.rotate(upRotMat)
 

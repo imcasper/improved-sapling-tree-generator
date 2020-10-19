@@ -7,7 +7,7 @@ import bpy
 from mathutils import Vector
 
 from .TreeSettings import TreeSettings
-from .utils import toRad, evalBez, roundBone
+from .utils import to_rad, eval_bez, round_bone
 from .kickstart_trunk import kickstart_trunk
 from .fabricate_stems import fabricate_stems
 from .grow_branch_level import grow_branch_level
@@ -26,53 +26,13 @@ def add_tree(props):
 
     # Set all other variables
     tree_settings = TreeSettings(props)
-    # levels = props.levels#
-    # length = props.length#
-    # lengthV = props.lengthV#
-    # taperCrown = props.taperCrown
     branches = props.branches#
-    # curveRes = props.curveRes#
-    # curve = toRad(props.curve)#
-    # curveV = toRad(props.curveV)#
-    # curveBack = toRad(props.curveBack)#
-    # baseSplits = props.baseSplits#
-    # segSplits = props.segSplits#
-    # splitByLen = props.splitByLen
-    # rMode = props.rMode
-    # splitStraight = props.splitStraight
-    # splitLength = props.splitLength
-    # splitAngle = toRad(props.splitAngle)#
-    # splitAngleV = toRad(props.splitAngleV)#
-    # scale = props.scale#
     scaleV = props.scaleV#
-    # attractUp = props.attractUp#
-    # attractOut = props.attractOut
     shape = int(props.shape)#
     shapeS = int(props.shapeS)#
-    # customShape = props.customShape
-    # branchDist = props.branchDist
-    nrings = props.nrings
     baseSize = props.baseSize
-    # baseSize_s = props.baseSize_s
-    # leafBaseSize = props.leafBaseSize
-    # splitHeight = props.splitHeight
-    # splitBias = props.splitBias
-    # ratio = props.ratio
-    # minRadius = props.minRadius
-    # closeTip = props.closeTip
-    # rootFlare = props.rootFlare
-    # splitRadiusRatio = props.splitRadiusRatio
-    # autoTaper = props.autoTaper
     taper = props.taper#
     noTip = props.noTip
-    # radiusTweak = props.radiusTweak
-    # ratioPower = props.ratioPower#
-    # downAngle = toRad(props.downAngle)#
-    # downAngleV = toRad(props.downAngleV)#
-    # rotate = toRad(props.rotate)#
-    # rotateV = toRad(props.rotateV)#
-    # scale0 = props.scale0#
-    # scaleV0 = props.scaleV0#
     attachment = props.attachment
     leafType = props.leafType
     leafDownAngle = radians(props.leafDownAngle)
@@ -380,7 +340,7 @@ def add_tree(props):
                 pn = splitPidx[i] #int(splineToBone[i][-3:])
                 p_1 = cu.splines[pb].bezier_points[pn]
                 p_2 = cu.splines[pb].bezier_points[pn+1]
-                p = evalBez(p_1.co, p_1.handle_right, p_2.handle_left, p_2.co, 1 - 1/(resU + 1))
+                p = eval_bez(p_1.co, p_1.handle_right, p_2.handle_left, p_2.co, 1 - 1 / (resU + 1))
                 treeVerts.append(p)
 
                 root_vert.append(False)
@@ -413,7 +373,7 @@ def add_tree(props):
             for lvl, p2 in enumerate(points[1:]):
                 if not g:
                     groupName = 'bone' + (str(i)).rjust(3, '0') + '.' + (str(lvl)).rjust(3, '0')
-                    groupName = roundBone(groupName, step)
+                    groupName = round_bone(groupName, step)
                     if groupName not in vertexGroups:
                         vertexGroups[groupName] = []
 
@@ -427,7 +387,7 @@ def add_tree(props):
 
                 for f in range(1, resU+1):
                     pos = f / resU
-                    p = evalBez(p1.co, p1.handle_right, p2.handle_left, p2.co, pos)
+                    p = eval_bez(p1.co, p1.handle_right, p2.handle_left, p2.co, pos)
                     radius = p1.radius + (p2.radius - p1.radius) * pos
 
                     treeVerts.append(p)
