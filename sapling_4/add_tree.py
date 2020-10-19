@@ -209,11 +209,7 @@ def add_tree(props):
         childP = []
         # Now grow each of the stems in the list of those to be extended
         for st in stemList:
-            splineToBone = grow_branch_level(baseSize, tree_settings.baseSplits, childP, cu, tree_settings.curve, tree_settings.curveBack, tree_settings.curveRes, handles, lvl, tree_settings.levels,
-                                             tree_settings.branches, scaleVal, tree_settings.segSplits, splineToBone, tree_settings.splitAngle, tree_settings.splitAngleV, st, tree_settings.branchDist,
-                                             tree_settings.length, tree_settings.splitByLen, closeTipp, tree_settings.splitRadiusRatio, tree_settings.minRadius, tree_settings.nrings, tree_settings.splitBias,
-                                             tree_settings.splitHeight, tree_settings.attractOut, tree_settings.rMode, tree_settings.splitStraight, tree_settings.splitLength, tree_settings.lengthV, tree_settings.taperCrown,
-                                             noTip, boneStep, tree_settings.rotate, tree_settings.rotateV, leaves, leafType, attachment, matIndex)
+            splineToBone = grow_branch_level(tree_settings, baseSize, childP, cu, handles, lvl, scaleVal, splineToBone, st, closeTipp, noTip, boneStep, leaves, leafType, attachment, matIndex)
 
         levelCount.append(len(cu.splines))
 
