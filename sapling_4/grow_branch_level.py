@@ -8,7 +8,7 @@ from .find_child_points import find_child_points, find_child_points2, find_child
 from .TreeSettings import TreeSettings
 
 
-def grow_branch_level(tree_settings: TreeSettings, baseSize, childP, cu, handles, n, scaleVal, splineToBone, st, closeTip, noTip, boneStep, leaves, leafType, attachment, matIndex):
+def grow_branch_level(tree_settings: TreeSettings, baseSize, childP, cu, handles, n, scaleVal, splineToBone, st, closeTip, noTip, boneStep, leaves, leafType, attachment):
     # Initialise the spline list of split stems in the current branch
     splineList = [st]
     # For each of the segments of the stem which must be grown we have to add to each spline in splineList
@@ -62,7 +62,7 @@ def grow_branch_level(tree_settings: TreeSettings, baseSize, childP, cu, handles
                 spl.curv += 2 * (tree_settings.curveBack[n] / tree_settings.curveRes[n]) #was -4 *
 
             grow_spline(n, spl, numSplit, tree_settings.splitAngle[n], tree_settings.splitAngleV[n], tree_settings.splitStraight, splineList, handles, splineToBone,
-                        closeTip, tree_settings.splitRadiusRatio, tree_settings.minRadius, kp, tree_settings.splitHeight, tree_settings.attractOut[n], tree_settings.splitLength, tree_settings.lengthV[n], tree_settings.taperCrown, boneStep, tree_settings.rotate, tree_settings.rotateV, matIndex)
+                        closeTip, tree_settings.splitRadiusRatio, tree_settings.minRadius, kp, tree_settings.splitHeight, tree_settings.attractOut[n], tree_settings.splitLength, tree_settings.lengthV[n], tree_settings.taperCrown, boneStep, tree_settings.rotate, tree_settings.rotateV, tree_settings.matIndex)
 
     # Sprout child points to grow the next splines or leaves
     if (n == 0) and (tree_settings.rMode == 'rotate'):

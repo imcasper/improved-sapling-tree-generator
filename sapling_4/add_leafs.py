@@ -5,7 +5,7 @@ from .gen_leaf_mesh import gen_leaf_mesh
 from .ChildPoint import ChildPoint
 
 
-def add_leafs(childP: ChildPoint, leafObj, leafObjRot, leaf_settings, leaves, lvl, treeOb):
+def add_leafs(childP: ChildPoint, leafObj, leaf_settings, leaves, lvl, treeOb):
     leafVerts = []
     leafFaces = []
     leafNormals = []

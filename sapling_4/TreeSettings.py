@@ -50,3 +50,11 @@ class TreeSettings:
         self.rotateV = to_rad(props.rotateV)  #
         self.scale0 = props.scale0  #
         self.scaleV0 = props.scaleV0  #
+
+        self.useOldDownAngle = props.useOldDownAngle
+        self.useParentAngle = props.useParentAngle
+
+        self.matIndex = props.matIndex
+
+        self.bevelRes = props.bevelRes  #
+        self.resU = props.resU  #

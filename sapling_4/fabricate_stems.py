@@ -13,7 +13,7 @@ from .TreeSettings import TreeSettings
 def fabricate_stems(tree_settings: TreeSettings, addsplinetobone, addstem, baseSize, childP, cu,
                     leafDist, leaves, leafType, n,
                     scaleVal, storeN,
-                    useOldDownAngle, useParentAngle, boneStep, matIndex):
+                    boneStep):
 
     #prevent baseSize from going to 1.0
     baseSize = min(0.999, baseSize)
@@ -236,12 +236,12 @@ def fabricate_stems(tree_settings: TreeSettings, addsplinetobone, addstem, baseS
     for i, p in enumerate(childP):
         # Add a spline and set the coordinate of the first point.
         newSpline = cu.splines.new('BEZIER')
-        newSpline.material_index = matIndex[n]
+        newSpline.material_index = tree_settings.matIndex[n]
         newPoint = newSpline.bezier_points[-1]
         newPoint.co = p.co
         tempPos = zAxis.copy()
         # If the -ve flag for downAngle is used we need a special formula to find it
-        if useOldDownAngle:
+        if tree_settings.useOldDownAngle:
             if tree_settings.downAngleV[n] < 0.0:
                 downV = tree_settings.downAngleV[n] * (1 - 2 * (.2 + .8 * ((1 - p.offset) / (1 - baseSize))))
             # Otherwise just find a random value
@@ -277,7 +277,7 @@ def fabricate_stems(tree_settings: TreeSettings, addsplinetobone, addstem, baseS
 
         #use quat angle
         if (n == 1) and (p.offset != 1):
-            if useParentAngle:
+            if tree_settings.useParentAngle:
                 tempPos.rotate(convert_quat(p.quat))
         else:
             tempPos.rotate(p.quat)

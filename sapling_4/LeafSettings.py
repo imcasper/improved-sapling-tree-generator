@@ -1,4 +1,5 @@
 from math import radians, copysign
+from .leaf_rot import leaf_rot
 
 
 class LeafSettings:
@@ -20,3 +21,4 @@ class LeafSettings:
         # leafObjX = props.leafObjX
         self.leafObjY = props.leafObjY
         self.leafObjZ = props.leafObjZ
+        self.leafObjRot = leaf_rot(self.leafObjY, self.leafObjZ)
