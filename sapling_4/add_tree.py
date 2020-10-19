@@ -194,8 +194,7 @@ def add_tree(props):
 
         # If this is the first level of growth (the trunk) then we need some special work to begin the tree
         if lvl == 0:
-            kickstart_trunk(addstem, tree_settings.levels, leaves, tree_settings.branches, cu, tree_settings.downAngle, tree_settings.downAngleV, tree_settings.curve, tree_settings.curveRes, tree_settings.curveV, tree_settings.attractUp,
-                            tree_settings.length, tree_settings.lengthV, tree_settings.ratio, tree_settings.ratioPower, tree_settings.scale0, tree_settings.scaleV0, scaleVal, taper, tree_settings.minRadius, tree_settings.rootFlare, matIndex)
+            kickstart_trunk(tree_settings, addstem, leaves, cu, scaleVal, taper, matIndex)
         # If this isn't the trunk then we may have multiple stem to initialize
         else:
             # For each of the points defined in the list of stem starting points we need to grow a stem.
