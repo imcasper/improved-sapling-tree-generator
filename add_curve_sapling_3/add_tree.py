@@ -16,6 +16,7 @@ from .kickstart_trunk import kickstart_trunk
 from .fabricate_stems import fabricate_stems
 from .gen_leaf_mesh import gen_leaf_mesh
 from .create_armature import create_armature
+from .TreeSettings import TreeSettings
 
 
 def add_tree(props):
@@ -25,6 +26,7 @@ def add_tree(props):
     seed(props.seed)#
 
     # Set all other variables
+    tree_settings = TreeSettings(props)
     levels = props.levels#
     length = props.length#
     lengthV = props.lengthV#
@@ -131,7 +133,7 @@ def add_tree(props):
 
     #taper
     if autoTaper:
-        taper = find_taper(length, taper, shape, shapeS, levels, customShape)
+        taper = find_taper(tree_settings)
 
     leafObj = None
 
@@ -238,11 +240,9 @@ def add_tree(props):
         # If this isn't the trunk then we may have multiple stem to initialize
         else:
             # For each of the points defined in the list of stem starting points we need to grow a stem.
-            fabricate_stems(addsplinetobone, addstem, baseSize, branches, childP, cu, curve, curveBack,
-                            curveRes, curveV, attractUp, downAngle, downAngleV, leafDist, leaves, leafType, length, lengthV,
-                            levels, n, ratio, ratioPower, resU, rotate, rotateV, scaleVal, shape, storeN,
-                            taper, shapeS, minRadius, radiusTweak, customShape, rMode, segSplits,
-                            useOldDownAngle, useParentAngle, boneStep, matIndex)
+            fabricate_stems(tree_settings, addsplinetobone, addstem, baseSize, childP, cu, leafDist,
+                            leaves, leafType, n, scaleVal, storeN,
+                            boneStep)
 
         #change base size for each level
         if n > 0:
