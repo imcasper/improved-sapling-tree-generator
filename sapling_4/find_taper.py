@@ -3,7 +3,7 @@ from .TreeSettings import TreeSettings
 
 
 # calculate taper automatically
-def find_taper(tree_settings: TreeSettings, taper):
+def find_taper(tree_settings: TreeSettings):
     taper_s = []
     for i, t in enumerate(tree_settings.length):
         if i == 0:

@@ -6,6 +6,7 @@ from random import seed, uniform
 import bpy
 from mathutils import Vector
 
+from .LeafSettings import LeafSettings
 from .TreeSettings import TreeSettings
 from .utils import to_rad, eval_bez, round_bone
 from .kickstart_trunk import kickstart_trunk
@@ -30,19 +31,21 @@ def add_tree(props):
     baseSize = props.baseSize
     noTip = props.noTip
     attachment = props.attachment
-    leafType = props.leafType
-    leafDownAngle = radians(props.leafDownAngle)
-    leafDownAngleV = radians(props.leafDownAngleV)
-    leafRotate = radians(props.leafRotate)
-    leafRotateV = radians(props.leafRotateV)
-    leafScale = props.leafScale#
-    leafScaleX = props.leafScaleX#
-    leafScaleT = props.leafScaleT
-    leafScaleV = props.leafScaleV
-    leafShape = props.leafShape
-    leafDupliObj = props.leafDupliObj
-    leafangle = props.leafangle
-    leafDist = int(props.leafDist)#
+
+    leaf_settings = LeafSettings(props)
+    # leafType = props.leafType
+    # leafDownAngle = radians(props.leafDownAngle)
+    # leafDownAngleV = radians(props.leafDownAngleV)
+    # leafRotate = radians(props.leafRotate)
+    # leafRotateV = radians(props.leafRotateV)
+    # leafScale = props.leafScale#
+    # leafScaleX = props.leafScaleX#
+    # leafScaleT = props.leafScaleT
+    # leafScaleV = props.leafScaleV
+    # leafShape = props.leafShape
+    # leafDupliObj = props.leafDupliObj
+    # leafangle = props.leafangle
+    # leafDist = int(props.leafDist)#
     bevelRes = props.bevelRes#
     resU = props.resU#
 
@@ -154,7 +157,7 @@ def add_tree(props):
         # If this isn't the trunk then we may have multiple stem to initialize
         else:
             # For each of the points defined in the list of stem starting points we need to grow a stem.
-            fabricate_stems(tree_settings, addsplinetobone, addstem, baseSize, childP, cu, leafDist, leaves, leafType, lvl, scaleVal, storeN, useOldDownAngle, useParentAngle, boneStep, matIndex)
+            fabricate_stems(tree_settings, addsplinetobone, addstem, baseSize, childP, cu, leaf_settings.leafDist, leaves, leaf_settings.leafType, lvl, scaleVal, storeN, useOldDownAngle, useParentAngle, boneStep, matIndex)
 
         #change base size for each level
         if lvl > 0:
@@ -165,7 +168,7 @@ def add_tree(props):
         childP = []
         # Now grow each of the stems in the list of those to be extended
         for st in stemList:
-            splineToBone = grow_branch_level(tree_settings, baseSize, childP, cu, handles, lvl, scaleVal, splineToBone, st, closeTipp, noTip, boneStep, leaves, leafType, attachment, matIndex)
+            splineToBone = grow_branch_level(tree_settings, baseSize, childP, cu, handles, lvl, scaleVal, splineToBone, st, closeTipp, noTip, boneStep, leaves, leaf_settings.leafType, attachment, matIndex)
 
         levelCount.append(len(cu.splines))
 
@@ -186,21 +189,17 @@ def add_tree(props):
         # For each of the child points we add leaves
         for ln, cp in enumerate(childP):
             # If the special flag is set then we need to add several leaves at the same location
-            if leafType == '4':
-                oldRot = -leafRotate / 2
+            if leaf_settings.leafType == '4':
+                oldRot = -leaf_settings.leafRotate / 2
                 for g in range(abs(leaves)):
-                    (vertTemp, faceTemp, normal, oldRot) = gen_leaf_mesh(leafScale, leafScaleX, leafScaleT, leafScaleV, cp.co, cp.quat, cp.offset,
-                                                                         len(leafVerts), leafDownAngle, leafDownAngleV, leafRotate, leafRotateV,
-                                                                         oldRot, leaves, leafShape, leafangle, leafType, ln, leafObjRot)
+                    (vertTemp, faceTemp, normal, oldRot) = gen_leaf_mesh(leaf_settings, cp.co, cp.quat, cp.offset, len(leafVerts), oldRot, leaves, ln, leafObjRot)
                     leafVerts.extend(vertTemp)
                     leafFaces.extend(faceTemp)
                     leafNormals.extend(normal)
                     leafP.append(cp)
             # Otherwise just add the leaves like splines.
             else:
-                (vertTemp, faceTemp, normal, oldRot) = gen_leaf_mesh(leafScale, leafScaleX, leafScaleT, leafScaleV, cp.co, cp.quat, cp.offset,
-                                                                     len(leafVerts), leafDownAngle, leafDownAngleV, leafRotate, leafRotateV,
-                                                                     oldRot, leaves, leafShape, leafangle, leafType, ln, leafObjRot)
+                (vertTemp, faceTemp, normal, oldRot) = gen_leaf_mesh(leaf_settings, cp.co, cp.quat, cp.offset, len(leafVerts), oldRot, leaves, ln, leafObjRot)
                 leafVerts.extend(vertTemp)
                 leafFaces.extend(faceTemp)
                 leafNormals.extend(normal)
@@ -214,32 +213,32 @@ def add_tree(props):
         leafMesh.from_pydata(leafVerts, (), leafFaces)
 
         #set vertex normals for dupliVerts
-        if leafShape == 'dVert':
+        if leaf_settings.leafShape == 'dVert':
             leafMesh.vertices.foreach_set('normal', leafNormals)
 
         # enable duplication
-        if leafShape == 'dFace':
+        if leaf_settings.leafShape == 'dFace':
             leafObj.instance_type = "FACES"
             leafObj.use_instance_faces_scale = True
             leafObj.instance_faces_scale = 10.0
             try:
-                bpy.data.objects[leafDupliObj].parent = leafObj
+                bpy.data.objects[leaf_settings.leafDupliObj].parent = leafObj
             except KeyError:
                 pass
-        elif leafShape == 'dVert':
+        elif leaf_settings.leafShape == 'dVert':
             leafObj.instance_type = "VERTS"
             leafObj.use_instance_vertices_rotation = True
             try:
-                bpy.data.objects[leafDupliObj].parent = leafObj
+                bpy.data.objects[leaf_settings.leafDupliObj].parent = leafObj
             except KeyError:
                 pass
 
         #add leaf UVs
-        if leafShape == 'rect':
+        if leaf_settings.leafShape == 'rect':
             leafMesh.uv_layers.new(name="leafUV")
             uvlayer = leafMesh.uv_layers.active.data
 
-            u1 = .5 * (1 - leafScaleX)
+            u1 = .5 * (1 - leaf_settings.leafScaleX)
             u2 = 1 - u1
 
             for i in range(0, len(leafFaces)):
@@ -248,11 +247,11 @@ def add_tree(props):
                 uvlayer[i*4 + 2].uv = Vector((u1, 1))
                 uvlayer[i*4 + 3].uv = Vector((u1, 0))
 
-        elif leafShape == 'hex':
+        elif leaf_settings.leafShape == 'hex':
             leafMesh.uv_layers.new(name="leafUV")
             uvlayer = leafMesh.uv_layers.active.data
 
-            u1 = .5 * (1 - leafScaleX)
+            u1 = .5 * (1 - leaf_settings.leafScaleX)
             u2 = 1 - u1
 
             for i in range(0, int(len(leafFaces) / 2)):
@@ -268,7 +267,7 @@ def add_tree(props):
 
         leafMesh.validate()
 
-    leafVertSize = {'hex': 6, 'rect': 4, 'dFace': 4, 'dVert': 1}[leafShape]
+    leafVertSize = {'hex': 6, 'rect': 4, 'dFace': 4, 'dVert': 1}[leaf_settings.leafShape]
 
     armLevels = min(armLevels, tree_settings.levels)
     armLevels -= 1
