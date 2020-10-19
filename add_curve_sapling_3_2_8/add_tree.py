@@ -16,6 +16,7 @@ from .gen_leaf_mesh import gen_leaf_mesh
 from .create_armature import create_armature
 from .find_taper import find_taper
 from .leaf_rot import leaf_rot
+from .TreeSettings import TreeSettings
 
 
 
@@ -26,60 +27,30 @@ def add_tree(props):
     seed(props.seed)#
 
     # Set all other variables
-    levels = props.levels#
-    length = props.length#
-    lengthV = props.lengthV#
-    taperCrown = props.taperCrown
-    branches = props.branches#
-    curveRes = props.curveRes#
-    curve = toRad(props.curve)#
-    curveV = toRad(props.curveV)#
-    curveBack = toRad(props.curveBack)#
+    tree_settings = TreeSettings(props)
+
     baseSplits = props.baseSplits#
-    segSplits = props.segSplits#
-    splitByLen = props.splitByLen
-    rMode = props.rMode
-    splitStraight = props.splitStraight
-    splitLength = props.splitLength
-    splitAngle = toRad(props.splitAngle)#
-    splitAngleV = toRad(props.splitAngleV)#
+
     scale = props.scale#
     scaleV = props.scaleV#
-    attractUp = props.attractUp#
-    attractOut = props.attractOut
-    shape = int(props.shape)#
-    shapeS = int(props.shapeS)#
-    customShape = props.customShape
-    branchDist = props.branchDist
-    nrings = props.nrings
+
     baseSize = props.baseSize
     baseSize_s = props.baseSize_s
     leafBaseSize = props.leafBaseSize
-    splitHeight = props.splitHeight
-    splitBias = props.splitBias
-    ratio = props.ratio
-    minRadius = props.minRadius
+
     closeTip = props.closeTip
-    rootFlare = props.rootFlare
-    splitRadiusRatio = props.splitRadiusRatio
+
     autoTaper = props.autoTaper
-    taper = props.taper#
+
     noTip = props.noTip
-    radiusTweak = props.radiusTweak
-    ratioPower = props.ratioPower#
-    downAngle = toRad(props.downAngle)#
-    downAngleV = toRad(props.downAngleV)#
-    rotate = toRad(props.rotate)#
-    rotateV = toRad(props.rotateV)#
-    scale0 = props.scale0#
-    scaleV0 = props.scaleV0#
+
     prune = props.prune#
     pruneWidth = props.pruneWidth#
     pruneBase = props.pruneBase
     pruneWidthPeak = props.pruneWidthPeak#
     prunePowerLow = props.prunePowerLow#
     prunePowerHigh = props.prunePowerHigh#
-    pruneRatio = props.pruneRatio#
+
     leafType = props.leafType
     leafDownAngle = radians(props.leafDownAngle)
     leafDownAngleV = radians(props.leafDownAngleV)
@@ -132,7 +103,7 @@ def add_tree(props):
 
     #taper
     if autoTaper:
-        taper = find_taper(length, taper, shape, shapeS, levels, customShape)
+        taper = find_taper(tree_settings)
 
     leafObj = None
 
@@ -221,7 +192,7 @@ def add_tree(props):
     addsplinetobone = splineToBone.append
 
     # Each of the levels needed by the user we grow all the splines
-    for n in range(levels):
+    for n in range(tree_settings.levels):
         storeN = n
         stemList = deque()
         addstem = stemList.append
@@ -230,25 +201,22 @@ def add_tree(props):
         splitError = 0.0
 
         #closeTip only on last level
-        closeTipp = all([(n == levels-1), closeTip])
+        closeTipp = all([(n == tree_settings.levels-1), closeTip])
 
         # If this is the first level of growth (the trunk) then we need some special work to begin the tree
         if n == 0:
-            kickstart_trunk(addstem, levels, leaves, branches, cu, downAngle, downAngleV, curve, curveRes, curveV, attractUp,
-                            length, lengthV, ratio, ratioPower, resU, scale0, scaleV0, scaleVal, taper, minRadius, rootFlare, matIndex)
+            kickstart_trunk(tree_settings, addstem, leaves, cu, scaleVal)
         # If this isn't the trunk then we may have multiple stem to initialize
         else:
             # For each of the points defined in the list of stem starting points we need to grow a stem.
-            fabricate_stems(addsplinetobone, addstem, baseSize, branches, childP, cu, curve, curveBack,
-                            curveRes, curveV, attractUp, downAngle, downAngleV, leafDist, leaves, leafType, length, lengthV,
-                            levels, n, ratio, ratioPower, resU, rotate, rotateV, scaleVal, shape, storeN,
-                            taper, shapeS, minRadius, radiusTweak, customShape, rMode, segSplits,
-                            useOldDownAngle, useParentAngle, boneStep, matIndex)
+            fabricate_stems(tree_settings, addsplinetobone, addstem, baseSize, childP, cu, leafDist,
+                            leaves, leafType, n, scaleVal, storeN,
+                            boneStep)
 
         #change base size for each level
         if n > 0:
             baseSize *= baseSize_s #decrease at each level
-        if (n == levels - 1):
+        if (n == tree_settings.levels - 1):
             baseSize = leafBaseSize
 
         childP = []
@@ -274,15 +242,8 @@ def add_tree(props):
             originalSplineToBone = copy.copy(splineToBone)
             forceSprout = False
             # Now do the iterative pruning, this uses a binary search and halts once the difference between upper and lower bounds of the search are less than 0.005
-            ratio, splineToBone = perform_pruning(baseSize, baseSplits, childP, cu, currentMax, currentMin,
-                                                  currentScale, curve, curveBack, curveRes, deleteSpline, forceSprout,
-                                                  handles, n, levels, branches, oldMax, originalSplineToBone, originalCo, originalCurv,
-                                                  originalCurvV, originalHandleL, originalHandleR, originalLength,
-                                                  originalSeg, prune, prunePowerHigh, prunePowerLow, pruneRatio,
-                                                  pruneWidth, pruneBase, pruneWidthPeak, randState, ratio, scaleVal, segSplits,
-                                                  splineToBone, splitAngle, splitAngleV, st, startPrune,
-                                                  branchDist, length, splitByLen, closeTipp, splitRadiusRatio, minRadius, nrings, splitBias, splitHeight,
-                                                  attractOut, rMode, splitStraight, splitLength, lengthV, taperCrown, noTip, boneStep, rotate, rotateV, leaves, leafType, matIndex)
+            ratio, splineToBone = perform_pruning(tree_settings, baseSize, baseSplits, childP, cu, n, scaleVal,
+                                                  splineToBone, st, closeTipp, noTip, boneStep, leaves, leafType)
 
         levelCount.append(len(cu.splines))
 
@@ -386,7 +347,7 @@ def add_tree(props):
 
     leafVertSize = {'hex': 6, 'rect': 4, 'dFace': 4, 'dVert': 1}[leafShape]
 
-    armLevels = min(armLevels, levels)
+    armLevels = min(armLevels, tree_settings.levels)
     armLevels -= 1
 
     # unpack vars from splineToBone
@@ -426,7 +387,7 @@ def add_tree(props):
 
         #vertex group for each level
         levelGroups = []
-        for n in range(levels):
+        for n in range(tree_settings.levels):
             treeObj.vertex_groups.new(name="Branching Level " + str(n))
             levelGroups.append([])
 

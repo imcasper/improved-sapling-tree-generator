@@ -58,5 +58,20 @@ class TreeSettings:
         self.prunePowerHigh = props.prunePowerHigh  #
         self.pruneRatio = props.pruneRatio  #
 
+
+        self.useOldDownAngle = props.useOldDownAngle
+        self.useParentAngle = props.useParentAngle
+
+        self.matIndex = props.matIndex
+
         self.bevelRes = props.bevelRes  #
         self.resU = props.resU  #
+
+        # Some effects can be turned ON and OFF, the necessary variables are changed here
+        self.bevelDepth = 0.0
+        if props.bevel:
+            self.bevelDepth = 1.0
+
+        self.handles = 'VECTOR'
+        if props.handleType == '0':
+            self.handles = 'AUTO'

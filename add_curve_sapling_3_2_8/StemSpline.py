@@ -23,6 +23,9 @@ class StemSpline:
 
         self.curvSignx = choice([1, -1])
         self.curvSigny = choice([1, -1])
+        self.splitSignx = choice([1, -1])
+        self.splitSigny = choice([1, -1])
+
 
     # This method determines the quaternion of the end of the spline
     def quat(self):
@@ -30,11 +33,13 @@ class StemSpline:
             return ((self.spline.bezier_points[-1].handle_right - self.spline.bezier_points[-1].co).normalized()).to_track_quat('Z', 'Y')
         else:
             return ((self.spline.bezier_points[-1].co - self.spline.bezier_points[-2].co).normalized()).to_track_quat('Z', 'Y')
+
     # Determine the declination
     def dec(self):
         tempVec = zAxis.copy()
         tempVec.rotate(self.quat())
         return zAxis.angle(tempVec)
+
     # Update the end of the spline and increment the segment count
     def updateEnd(self):
         self.p = self.spline.bezier_points[-1]
