@@ -1,8 +1,10 @@
 import bpy
 from mathutils import Vector
+from typing import List
 
 from .gen_leaf_mesh import gen_leaf_mesh
 from .ChildPoint import ChildPoint
+from .LeafSettings import LeafSettings
 
 
 def add_leafs(childP: ChildPoint, leafObj, leaf_settings, lvl, treeOb):
@@ -13,7 +15,7 @@ def add_leafs(childP: ChildPoint, leafObj, leaf_settings, lvl, treeOb):
     leafP = []
 
     def leafy(old_rotation, cp: ChildPoint, ln):
-        (vertTemp, faceTemp, normal, old_rotation) = gen_leaf_mesh(leaf_settings, cp.co, cp.quat, cp.offset, len(leafVerts), old_rotation, leaf_settings.leaves, ln)
+        (vertTemp, faceTemp, normal, old_rotation) = gen_leaf_mesh(leaf_settings, cp.co, cp.quat, cp.offset, len(leafVerts), old_rotation, ln)
         leafVerts.extend(vertTemp)
         leafFaces.extend(faceTemp)
         leafNormals.extend(normal)
@@ -62,41 +64,61 @@ def add_leafs(childP: ChildPoint, leafObj, leaf_settings, lvl, treeOb):
                 pass
 
         # add leaf UVs
-        if leaf_settings.leafShape == 'rect':
-            unwrap_leaf_uvs_rect(leafFaces, leafMesh, leaf_settings)
-
-        elif leaf_settings.leafShape == 'hex':
-            unwrap_leaf_uvs_hex(leafFaces, leafMesh, leaf_settings)
+        if leaf_settings.leafShape == 'rect' or leaf_settings.leafShape == 'hex':
+            unwrap_leaf_uvs(leafFaces, leafMesh, leaf_settings)
 
         leafMesh.validate()
-    leafVertSize = {'hex': 6, 'rect': 4, 'dFace': 4, 'dVert': 1}[leaf_settings.leafShape]
-    return leafMesh, leafObj, leafP, leafVertSize
+
+    return leafMesh, leafObj, leafP
+
+# def unwrap_leaf_uvs_hex(leafFaces, leafMesh, leaf_settings):
+#     leafMesh.uv_layers.new(name="leafUV")
+#     uvlayer = leafMesh.uv_layers.active.data
+#     u1 = .5 * (1 - leaf_settings.leafScaleX)
+#     u2 = 1 - u1
+#     for i in range(0, int(len(leafFaces) / 2)):
+#         uvlayer[i * 8 + 0].uv = Vector((.5, 0))
+#         uvlayer[i * 8 + 1].uv = Vector((u1, 1 / 3))
+#         uvlayer[i * 8 + 2].uv = Vector((u1, 2 / 3))
+#         uvlayer[i * 8 + 3].uv = Vector((.5, 1))
+#
+#         uvlayer[i * 8 + 4].uv = Vector((.5, 0))
+#         uvlayer[i * 8 + 5].uv = Vector((.5, 1))
+#         uvlayer[i * 8 + 6].uv = Vector((u2, 2 / 3))
+#         uvlayer[i * 8 + 7].uv = Vector((u2, 1 / 3))
+#
+#
+# def unwrap_leaf_uvs_rect(leafFaces, leafMesh, leaf_settings):
+#     leafMesh.uv_layers.new(name="leafUV")
+#     uvlayer = leafMesh.uv_layers.active.data
+#     u1 = .5 * (1 - leaf_settings.leafScaleX)
+#     u2 = 1 - u1
+#     for i in range(0, len(leafFaces)):
+#         uvlayer[i * 4 + 0].uv = Vector((u2, 0))
+#         uvlayer[i * 4 + 1].uv = Vector((u2, 1))
+#         uvlayer[i * 4 + 2].uv = Vector((u1, 1))
+#         uvlayer[i * 4 + 3].uv = Vector((u1, 0))
 
 
-def unwrap_leaf_uvs_hex(leafFaces, leafMesh, leaf_settings):
-    leafMesh.uv_layers.new(name="leafUV")
-    uvlayer = leafMesh.uv_layers.active.data
-    u1 = .5 * (1 - leaf_settings.leafScaleX)
-    u2 = 1 - u1
-    for i in range(0, int(len(leafFaces) / 2)):
-        uvlayer[i * 8 + 0].uv = Vector((.5, 0))
-        uvlayer[i * 8 + 1].uv = Vector((u1, 1 / 3))
-        uvlayer[i * 8 + 2].uv = Vector((u1, 2 / 3))
-        uvlayer[i * 8 + 3].uv = Vector((.5, 1))
+def unwrap_leaf_uvs(leaf_faces, leaf_mesh, leaf_settings: LeafSettings):
+    leaf_mesh.uv_layers.new(name='leafUV')
+    uv_layer = leaf_mesh.uv_layers.active.data
+    u1 = .5 * (1 - leaf_settings.leaf_scale_x)
 
-        uvlayer[i * 8 + 4].uv = Vector((.5, 0))
-        uvlayer[i * 8 + 5].uv = Vector((.5, 1))
-        uvlayer[i * 8 + 6].uv = Vector((u2, 2 / 3))
-        uvlayer[i * 8 + 7].uv = Vector((u2, 1 / 3))
+    x_adj: List[float] = []
+    base_x: List[float] = []
+    base_y: List[float] = []
 
+    (x_adj, base_x, base_y) = leaf_settings.get_uv_list()
 
-def unwrap_leaf_uvs_rect(leafFaces, leafMesh, leaf_settings):
-    leafMesh.uv_layers.new(name="leafUV")
-    uvlayer = leafMesh.uv_layers.active.data
-    u1 = .5 * (1 - leaf_settings.leafScaleX)
-    u2 = 1 - u1
-    for i in range(0, len(leafFaces)):
-        uvlayer[i * 4 + 0].uv = Vector((u2, 0))
-        uvlayer[i * 4 + 1].uv = Vector((u2, 1))
-        uvlayer[i * 4 + 2].uv = Vector((u1, 1))
-        uvlayer[i * 4 + 3].uv = Vector((u1, 0))
+    u_list1: List[float] = [e * u1 for e in x_adj]
+    x_list: List[float] = []
+    y_list: List[float] = base_y
+    for e, f in zip(u_list1, base_x):
+        x_list.append(e+f)
+
+    num_v = len(x_list)
+    ugg = (leaf_settings.leafVertSize-2)/2
+    for i in range(0, int(len(leaf_faces) / ugg)):
+        for j in range(num_v):
+            uv_layer[i * num_v + j].uv = Vector((x_list[j], y_list[j]))

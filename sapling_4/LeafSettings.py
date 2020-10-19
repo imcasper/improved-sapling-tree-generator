@@ -1,5 +1,6 @@
-from math import radians, copysign
+from math import radians
 from .leaf_rot import leaf_rot
+from typing import List
 
 
 class LeafSettings:
@@ -27,3 +28,16 @@ class LeafSettings:
         if props.showLeaves:
             self.leaves = props.leaves
 
+        self.leafVertSize = {'hex': 6, 'rect': 4, 'dFace': 4, 'dVert': 1}[self.leafShape]
+
+    def get_uv_list(self):
+        if self.leafShape == 'hex':
+            hex_x_adj: List[float] = [0, 1, 1, 0, 0, 0, -1, -1]
+            hex_base_x: List[float] = [.5, 0, 0, .5, .5, .5, 1, 1]
+            hex_base_y: List[float] = [0, 1 / 3, 2 / 3, 1, 0, 1, 2 / 3, 1 / 3]
+            return hex_x_adj, hex_base_x, hex_base_y
+        if self.leafShape == 'rect':
+            rect_x_adj: List[float] = [-1, -1, 1, 1]
+            rect_base_x: List[float] = [1, 1, 0, 0]
+            rect_base_y: List[float] = [0, 1, 1, 0]
+            return rect_x_adj, rect_base_x, rect_base_y

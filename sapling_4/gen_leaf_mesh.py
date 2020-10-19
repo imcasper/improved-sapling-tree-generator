@@ -7,7 +7,7 @@ from .utils import zAxis
 from .LeafSettings import LeafSettings
 
 
-def gen_leaf_mesh(leaf_settings: LeafSettings, loc, quat, offset, index, oldRot, leaves, ln):
+def gen_leaf_mesh(leaf_settings: LeafSettings, loc, quat, offset, index, oldRot, ln):
     leafScale = leaf_settings.leafScale
     downAngle = leaf_settings.leafDownAngle
     downAngleV = leaf_settings.leafDownAngleV
@@ -44,10 +44,10 @@ def gen_leaf_mesh(leaf_settings: LeafSettings, loc, quat, offset, index, oldRot,
         oldRot = -copysign(leaf_settings.leafRotate, oldRot)
     elif leaf_settings.leafType == '4':
         rotMat = Matrix.Rotation(oldRot + uniform(-leaf_settings.leafRotateV, leaf_settings.leafRotateV), 3, 'Y')
-        if leaves == 1:
+        if leaf_settings.leaves == 1:
             rotMat = Matrix.Rotation(0, 3, 'Y')
         else:
-            oldRot += leaf_settings.leafRotate / (leaves - 1)
+            oldRot += leaf_settings.leafRotate / (leaf_settings.leaves - 1)
 
     if leaf_settings.leafType != '4':
         rotMat = Matrix.Rotation(oldRot + uniform(-leaf_settings.leafRotateV, leaf_settings.leafRotateV), 3, 'Z')
@@ -57,7 +57,7 @@ def gen_leaf_mesh(leaf_settings: LeafSettings, loc, quat, offset, index, oldRot,
         if leaf_settings.leafType in ['0', '1', '2', '5']:
             downAngle = downAngle * .67
         elif leaf_settings.leafType == '3':
-            if (leaves / 2) == (leaves // 2):
+            if (leaf_settings.leaves / 2) == (leaf_settings.leaves // 2):
                 downAngle = downAngle * .67
             else:
                 downAngle = 0
@@ -70,8 +70,8 @@ def gen_leaf_mesh(leaf_settings: LeafSettings, loc, quat, offset, index, oldRot,
     zVar = Matrix.Rotation(uniform(-leaf_settings.leafRotateV, leaf_settings.leafRotateV), 3, 'Z')
 
     #leaf scale variation
-    if (leaf_settings.leafType == '4') and (leaf_settings.leafRotate != 0) and (leaves > 1):
-        f = 1 - abs((oldRot - (leaf_settings.leafRotate / (leaves - 1))) / (leaf_settings.leafRotate / 2))
+    if (leaf_settings.leafType == '4') and (leaf_settings.leafRotate != 0) and (leaf_settings.leaves > 1):
+        f = 1 - abs((oldRot - (leaf_settings.leafRotate / (leaf_settings.leaves - 1))) / (leaf_settings.leafRotate / 2))
     else:
         f = offset
 

@@ -111,7 +111,7 @@ def add_tree(props):
     cu.resolution_u = tree_settings.resU
 
     # If we need to add leaves, we do it here
-    leafMesh, leafObj, leafP, leafVertSize = add_leafs(childP, leafObj, leaf_settings, lvl, treeOb)
+    leafMesh, leafObj, leafP = add_leafs(childP, leafObj, leaf_settings, lvl, treeOb)
 
     armature_settings.armLevels = min(armature_settings.armLevels, tree_settings.levels)
     armature_settings.armLevels -= 1
@@ -132,7 +132,7 @@ def add_tree(props):
     # If we need an armature we add it
     if armature_settings.useArm:
         # Create the armature and objects
-        armOb = create_armature(armature_settings, leafP, cu, leafMesh, leafObj, leafVertSize, leaf_settings.leaves, levelCount, splineToBone, treeOb, treeObj)
+        armOb = create_armature(armature_settings, leafP, cu, leafMesh, leafObj, leaf_settings.leafVertSize, leaf_settings.leaves, levelCount, splineToBone, treeOb, treeObj)
 
     #print(time.time()-startTime)
 
