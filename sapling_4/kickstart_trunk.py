@@ -3,7 +3,7 @@ from random import uniform
 
 from mathutils import Vector, Matrix
 
-from .utils import zAxis
+from .utils import z_axis
 from .StemSpline import StemSpline
 from .TreeSettings import TreeSettings
 
@@ -15,7 +15,7 @@ def kickstart_trunk(tree_settings: TreeSettings, add_stem, leaves, cu, scale_val
     new_point.co = Vector((0, 0, 0))
 
     # Start trunk rotation with down_angle
-    temp_pos = zAxis.copy()
+    temp_pos = z_axis.copy()
     down_ang = tree_settings.downAngle[0] - .5 * pi
     down_ang = down_ang  # + uniform(-downAngleV[0], downAngleV[0])
     down_rot = Matrix.Rotation(down_ang, 3, 'X')

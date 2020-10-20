@@ -28,9 +28,9 @@ tau = 2 * pi
 
 # Initialise the split error and axis vectors
 split_error = 0.0
-zAxis = Vector((0, 0, 1))
-yAxis = Vector((0, 1, 0))
-xAxis = Vector((1, 0, 0))
+z_axis = Vector((0, 0, 1))
+y_axis = Vector((0, 1, 0))
+x_axis = Vector((1, 0, 0))
 
 
 # This function determines the actual number of splits at a given point using the global error
@@ -61,7 +61,7 @@ def splits3(n): #for 3+ splits #not used
 
 # Determine the declination from a given quaternion
 def declination(quat):
-    temp_vec = zAxis.copy()
+    temp_vec = z_axis.copy()
     temp_vec.rotate(quat)
     temp_vec.normalize()
     return degrees(acos(temp_vec.z))
@@ -69,7 +69,7 @@ def declination(quat):
 
 # Determines the angle of upward rotation of a segment due to attractUp
 def curve_up(attract_up, quat, curve_res):
-    temp_vec = yAxis.copy()
+    temp_vec = y_axis.copy()
     temp_vec.rotate(quat)
     temp_vec.normalize()
     dec = radians(declination(quat))
@@ -83,7 +83,7 @@ def curve_up(attract_up, quat, curve_res):
 
 def curve_down(attract_up, quat, curve_res, length):
     # (sCurv, dirVec.to_track_quat('Z', 'Y'), stem.segMax, stem.segL * stem.segMax)
-    temp_vec = yAxis.copy()
+    temp_vec = y_axis.copy()
     temp_vec.rotate(quat)
     temp_vec.normalize()
     dec = radians(declination(quat))
@@ -130,7 +130,7 @@ def angle_mean(a1, a2, fac):
 
 # convert quat to use declination without rotation
 def convert_quat(quat):
-    a_dir = zAxis.copy()
+    a_dir = z_axis.copy()
     a_dir.rotate(quat)
     dec = radians(declination(quat))
     axis = Vector((-a_dir[1], a_dir[0], 0))

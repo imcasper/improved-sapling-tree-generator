@@ -4,7 +4,7 @@ from random import uniform, choice, randint
 
 from mathutils import Vector, Matrix
 
-from .utils import tau, zAxis, convert_quat, round_bone
+from .utils import tau, z_axis, convert_quat, round_bone
 from .StemSpline import StemSpline
 from .shape_ratio import shape_ratio
 from .TreeSettings import TreeSettings
@@ -118,7 +118,7 @@ def fabricate_stems(tree_settings: TreeSettings, addsplinetobone, addstem, baseS
                     downRotMat = Matrix.Rotation(downA, 3, 'X')
                     rotMat = Matrix.Rotation(bRotate, 3, 'Z')
 
-                    bVec = zAxis.copy()
+                    bVec = z_axis.copy()
                     bVec.rotate(downRotMat)
                     bVec.rotate(rotMat)
                     bVec.rotate(convert_quat(br.quat))
@@ -159,7 +159,7 @@ def fabricate_stems(tree_settings: TreeSettings, addsplinetobone, addstem, baseS
                     bRotate = bRotate + rotV
                     rotMat = Matrix.Rotation(bRotate, 3, 'Z')
 
-                    bVec = zAxis.copy()
+                    bVec = z_axis.copy()
                     bVec.rotate(downRotMat)
                     bVec.rotate(rotMat)
                     bVec.rotate(convert_quat(br.quat))
@@ -239,7 +239,7 @@ def fabricate_stems(tree_settings: TreeSettings, addsplinetobone, addstem, baseS
         newSpline.material_index = tree_settings.matIndex[n]
         newPoint = newSpline.bezier_points[-1]
         newPoint.co = p.co
-        tempPos = zAxis.copy()
+        tempPos = z_axis.copy()
         # If the -ve flag for downAngle is used we need a special formula to find it
         if tree_settings.useOldDownAngle:
             if tree_settings.downAngleV[n] < 0.0:

@@ -1,30 +1,32 @@
 from math import ceil, floor
 from random import uniform
+from typing import List
 
 from .utils import splits, splits2, splits3
 from .grow_spline import grow_spline
 from .interp_stem import interp_stem
 from .find_child_points import find_child_points, find_child_points2, find_child_points3
+from .ChildPoint import ChildPoint
 from .TreeSettings import TreeSettings
 
 
-def grow_branch_level(tree_settings: TreeSettings, base_size, child_p, cu, n, scale_val, spline_to_bone, st, close_tip, noTip, bone_step, leaves, leaf_type, attachment):
+def grow_branch_level(tree_settings: TreeSettings, base_size, child_points: List[ChildPoint], lvl, scale_val, spline_to_bone, stem, close_tip, bone_step, leaves, leaf_type, attachment):
     # Initialise the spline list of split stems in the current branch
-    spline_list = [st]
+    spline_list = [stem]
     # For each of the segments of the stem which must be grown we have to add to each spline in spline_list
-    for k in range(tree_settings.curveRes[n]):
+    for k in range(tree_settings.curveRes[lvl]):
         # Make a copy of the current list to avoid continually adding to the list we're iterating over
         temp_list = spline_list[:]
 
         #for curve variation
-        if tree_settings.curveRes[n] > 1:
-            kp = (k / (tree_settings.curveRes[n] - 1)) # * 2
+        if tree_settings.curveRes[lvl] > 1:
+            kp = (k / (tree_settings.curveRes[lvl] - 1)) # * 2
         else:
             kp = 1.0
 
         #split bias
-        split_value = tree_settings.segSplits[n]
-        if n == 0:
+        split_value = tree_settings.segSplits[lvl]
+        if lvl == 0:
             split_value = ((2 * tree_settings.splitBias) * (kp - .5) + 1) * split_value
             split_value = max(split_value, 0.0)
 
@@ -41,82 +43,82 @@ def grow_branch_level(tree_settings: TreeSettings, base_size, child_p, cu, n, sc
 
             if k == 0:
                 num_split = 0
-            elif (k == 1) and (n == 0):
+            elif (k == 1) and (lvl == 0):
                 num_split = tree_settings.baseSplits
-            elif (n == 0) and (k == int((tree_settings.curveRes[n]) * tree_settings.splitHeight)) and (split_val > 0): #always split at splitHeight
+            elif (lvl == 0) and (k == int((tree_settings.curveRes[lvl]) * tree_settings.splitHeight)) and (split_val > 0): #always split at splitHeight
                 num_split = 1
-            elif (n == 0) and (k < ((tree_settings.curveRes[n]) * tree_settings.splitHeight)) and (k != 1): #splitHeight
+            elif (lvl == 0) and (k < ((tree_settings.curveRes[lvl]) * tree_settings.splitHeight)) and (k != 1): #splitHeight
                 num_split = 0
             else:
-                if (n >= 0) and tree_settings.splitByLen:
-                    L = ((spl.segL * tree_settings.curveRes[n]) / scale_val)
+                if (lvl >= 0) and tree_settings.splitByLen:
+                    L = ((spl.segL * tree_settings.curveRes[lvl]) / scale_val)
                     lf = 1
-                    for l in tree_settings.length[:n+1]:
+                    for l in tree_settings.length[:lvl + 1]:
                         lf *= l
                     L = L / lf
                     num_split = splits2(split_val * L)
                 else:
                     num_split = splits2(split_val)
 
-            if (k == int(tree_settings.curveRes[n] / 2 + 0.5)) and (tree_settings.curveBack[n] != 0):
-                spl.curv += 2 * (tree_settings.curveBack[n] / tree_settings.curveRes[n]) #was -4 *
+            if (k == int(tree_settings.curveRes[lvl] / 2 + 0.5)) and (tree_settings.curveBack[lvl] != 0):
+                spl.curv += 2 * (tree_settings.curveBack[lvl] / tree_settings.curveRes[lvl]) #was -4 *
 
-            grow_spline(tree_settings, n, spl, num_split, spline_list, spline_to_bone, close_tip, kp, bone_step)
+            grow_spline(tree_settings, lvl, spl, num_split, spline_list, spline_to_bone, close_tip, kp, bone_step)
 
     # Sprout child points to grow the next splines or leaves
-    if (n == 0) and (tree_settings.rMode == 'rotate'):
-        t_vals = find_child_points2(st.children)
-    elif (n == 0) and (tree_settings.rMode == 'distance'):
-        t_vals = find_child_points3(spline_list, st.children, rp=.25) #degrees(rotateV[3])
+    if (lvl == 0) and (tree_settings.rMode == 'rotate'):
+        t_values = find_child_points2(stem.children)
+    elif (lvl == 0) and (tree_settings.rMode == 'distance'):
+        t_values = find_child_points3(spline_list, stem.children, rp=.25) #degrees(rotateV[3])
 
-    elif ((n > 0) and (n != tree_settings.levels - 1) and (attachment == "1")) or ((n == tree_settings.levels - 1) and (leaf_type in ['1', '3'])): # oppositely attached leaves and branches
-        tVal = find_child_points(spline_list, ceil(st.children / 2))
-        t_vals = []
-        for t in tVal[:-1]:
-            t_vals.extend([t, t])
-        if (n == tree_settings.levels - 1) and ((leaves / 2) == (leaves // 2)):
+    elif ((lvl > 0) and (lvl != tree_settings.levels - 1) and (attachment == "1")) or ((lvl == tree_settings.levels - 1) and (leaf_type in ['1', '3'])): # oppositely attached leaves and branches
+        t_val = find_child_points(spline_list, ceil(stem.children / 2))
+        t_values = []
+        for t in t_val[:-1]:
+            t_values.extend([t, t])
+        if (lvl == tree_settings.levels - 1) and ((leaves / 2) == (leaves // 2)):
             # put two leaves at branch tip if leaves is even
-            t_vals.extend([1, 1])
+            t_values.extend([1, 1])
         else:
-            t_vals.append(1)
+            t_values.append(1)
     else:
-        t_vals = find_child_points(spline_list, st.children)
+        t_values = find_child_points(spline_list, stem.children)
 
-    if 1 not in t_vals:
-        t_vals.append(1.0)
-    if (n != tree_settings.levels - 1) and (tree_settings.branches[min(3, n+1)] == 0):
-        t_vals = []
+    if 1 not in t_values:
+        t_values.append(1.0)
+    if (lvl != tree_settings.levels - 1) and (tree_settings.branches[min(3, lvl + 1)] == 0):
+        t_values = []
 
-    if (n < tree_settings.levels - 1) and tree_settings.noTip:
-        t_vals = t_vals[:-1]
+    if (lvl < tree_settings.levels - 1) and tree_settings.noTip:
+        t_values = t_values[:-1]
 
-    # remove some of the points because of baseSize
-    t_vals = [t for t in t_vals if t > base_size]
+    # Remove some of the points because of baseSize
+    t_values = [t for t in t_values if t > base_size]
 
-    #grow branches in rings/whorls
-    if (n == 0) and (tree_settings.nrings > 0):
-        t_vals = [(floor(t * tree_settings.nrings) / tree_settings.nrings) * uniform(.999, 1.001) for t in t_vals[:-1]]
+    # Grow branches in rings/whorls
+    if (lvl == 0) and (tree_settings.nrings > 0):
+        t_values = [(floor(t * tree_settings.nrings) / tree_settings.nrings) * uniform(.999, 1.001) for t in t_values[:-1]]
         if not tree_settings.noTip:
-            t_vals.append(1)
-        t_vals = [t for t in t_vals if t > base_size]
+            t_values.append(1)
+        t_values = [t for t in t_values if t > base_size]
 
-    #branch distribution
-    if n == 0:
-        t_vals = [((t - base_size) / (1 - base_size)) for t in t_vals]
+    # Branch distribution
+    if lvl == 0:
+        t_values = [((t - base_size) / (1 - base_size)) for t in t_values]
         if tree_settings.branchDist <= 1.0:
-            t_vals = [t ** (1 / tree_settings.branchDist) for t in t_vals]
+            t_values = [t ** (1 / tree_settings.branchDist) for t in t_values]
         else:
-            #t_vals = [1 - (1 - t) ** branchDist for t in t_vals]
-            t_vals = [1 - t for t in t_vals]
+            # t_values = [1 - (1 - t) ** branchDist for t in t_values]
+            t_values = [1 - t for t in t_values]
             p = ((1/.5 ** tree_settings.branchDist) - 1) ** 2
-            t_vals = [(p ** t - 1) / (p-1) for t in t_vals]
-            t_vals = [1 - t for t in t_vals]
-        t_vals = [t * (1 - base_size) + base_size for t in t_vals]
+            t_values = [(p ** t - 1) / (p-1) for t in t_values]
+            t_values = [1 - t for t in t_values]
+        t_values = [t * (1 - base_size) + base_size for t in t_values]
 
     # For all the splines, we interpolate them and add the new points to the list of child points
-    maxOffset = max([s.offsetLen + (len(s.spline.bezier_points) - 1) * s.segL for s in spline_list])
+    max_offset = max([s.offsetLen + (len(s.spline.bezier_points) - 1) * s.segL for s in spline_list])
     for s in spline_list:
-        #print(str(n)+'level: ', s.segMax*s.segL)
-        child_p.extend(interp_stem(s, t_vals, maxOffset, base_size))
+        # print(str(n)+'level: ', s.segMax*s.segL)
+        child_points.extend(interp_stem(s, t_values, max_offset, base_size))
 
     return spline_to_bone

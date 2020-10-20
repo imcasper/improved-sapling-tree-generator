@@ -4,7 +4,7 @@ from random import uniform, choice
 import bpy
 from mathutils import Matrix, Euler
 
-from .utils import declination, angle_mean, convert_quat, zAxis, tau, xAxis, curve_up, round_bone
+from .utils import declination, angle_mean, convert_quat, z_axis, tau, x_axis, curve_up, round_bone
 from .StemSpline import StemSpline
 from .TreeSettings import TreeSettings
 
@@ -126,7 +126,7 @@ def grow_spline(tree_settings: TreeSettings, n, stem, num_split, spline_list, sp
 
             # Here we make the new "sprouting" stems diverge from the current direction
             div_rot_mat = Matrix.Rotation(angle * (1+branch_straightness) - curve_angle, 3, 'X')
-            dir_vec = zAxis.copy()
+            dir_vec = z_axis.copy()
             dir_vec.rotate(div_rot_mat)
 
             #horizontal curvature variation
@@ -146,7 +146,7 @@ def grow_spline(tree_settings: TreeSettings, n, stem, num_split, spline_list, sp
             dir_vec.rotate(dir)
 
             # Introduce upward curvature
-            up_rot_axis = xAxis.copy()
+            up_rot_axis = x_axis.copy()
             up_rot_axis.rotate(dir_vec.to_track_quat('Z', 'Y'))
             curve_up_ang = curve_up(stem.vertAtt, dir_vec.to_track_quat('Z', 'Y'), stem.segMax)
             up_rot_mat = Matrix.Rotation(-curve_up_ang, 3, up_rot_axis)
@@ -191,7 +191,7 @@ def grow_spline(tree_settings: TreeSettings, n, stem, num_split, spline_list, sp
 
         # The original spline also needs to keep growing so adjust its direction too
         div_rot_mat = Matrix.Rotation(-angle * (1-branch_straightness) - curve_angle, 3, 'X')
-        dir_vec = zAxis.copy()
+        dir_vec = z_axis.copy()
         dir_vec.rotate(div_rot_mat)
 
         #horizontal curvature variation
@@ -211,7 +211,7 @@ def grow_spline(tree_settings: TreeSettings, n, stem, num_split, spline_list, sp
 
     else:
         # If there are no splits then generate the growth direction without accounting for spreading of stems
-        dir_vec = zAxis.copy()
+        dir_vec = z_axis.copy()
         div_rot_mat = Matrix.Rotation(-curve_angle, 3, 'X')
         dir_vec.rotate(div_rot_mat)
 
@@ -223,7 +223,7 @@ def grow_spline(tree_settings: TreeSettings, n, stem, num_split, spline_list, sp
         stem.splitlast = 0 #numSplit #keep track of numSplit for next stem
 
     # Introduce upward curvature
-    up_rot_axis = xAxis.copy()
+    up_rot_axis = x_axis.copy()
     up_rot_axis.rotate(dir_vec.to_track_quat('Z', 'Y'))
     curve_up_ang = curve_up(stem.vertAtt, dir_vec.to_track_quat('Z', 'Y'), stem.segMax)
     up_rot_mat = Matrix.Rotation(-curve_up_ang, 3, up_rot_axis)
@@ -253,7 +253,7 @@ def grow_spline(tree_settings: TreeSettings, n, stem, num_split, spline_list, sp
     if len(stem.spline.bezier_points) == 2:
         temp_point = stem.spline.bezier_points[0]
         if handle_type is 'AUTO':
-            dir_vec = zAxis.copy()
+            dir_vec = z_axis.copy()
             dir_vec.rotate(dir)
             dir_vec = dir_vec * stem.segL * 0.33
             (temp_point.handle_left_type, temp_point.handle_right_type) = ('ALIGNED', 'ALIGNED')

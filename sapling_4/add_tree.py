@@ -24,7 +24,7 @@ def add_tree(props):
     tree_settings = TreeSettings(props)
     leaf_settings = LeafSettings(props)
     armature_settings = ArmatureSettings(props)
-    scaleV = props.scaleV#
+    scale_v = props.scaleV#
     baseSize = props.baseSize
 
     attachment = props.attachment
@@ -37,60 +37,62 @@ def add_tree(props):
         ob.select_set(state=False)
 
     # Initialise the tree object and curve and adjust the settings
-    cu = bpy.data.curves.new('tree', 'CURVE')
-    treeOb = bpy.data.objects.new('tree', cu)
-    bpy.context.scene.collection.objects.link(treeOb)
+    tree_curve = bpy.data.curves.new('tree', 'CURVE')
+    tree_curve_object = bpy.data.objects.new('tree', tree_curve)
+    bpy.context.scene.collection.objects.link(tree_curve_object)
     if not armature_settings.useArm:
-        treeOb.location = bpy.context.scene.cursor.location
+        tree_curve_object.location = bpy.context.scene.cursor.location
 
-    cu.dimensions = '3D'
-    cu.fill_mode = 'FULL'
-    cu.bevel_depth = tree_settings.bevelDepth
-    cu.bevel_resolution = tree_settings.bevelRes
-    # cu.use_uv_as_generated = True # removed 2.82
+    tree_curve.dimensions = '3D'
+    tree_curve.fill_mode = 'FULL'
+    tree_curve.bevel_depth = tree_settings.bevelDepth
+    tree_curve.bevel_resolution = tree_settings.bevelRes
+    # tree_curve.use_uv_as_generated = True # removed 2.82
 
     # material slots
     for i in range(max(tree_settings.matIndex)+1):
-        treeOb.data.materials.append(None)
+        tree_curve_object.data.materials.append(None)
 
     # Fix the scale of the tree now
     if rseed == 0: #first tree is always average size
-        scaleV = 0
-    scaleVal = tree_settings.scale + uniform(-scaleV, scaleV)
-    scaleVal += copysign(1e-6, scaleVal)  # Move away from zero to avoid div by zero
+        scale_v = 0
+    scale_val = tree_settings.scale + uniform(-scale_v, scale_v)
+    scale_val += copysign(1e-6, scale_val)  # Move away from zero to avoid div by zero
 
     # Each of the levels needed by the user we grow all the splines
-    childP, levelCount, splineToBone = grow_all_splines(tree_settings, armature_settings, leaf_settings, attachment, baseSize, cu, scaleVal)
+    child_points, level_count, spline_to_bone = grow_all_splines(tree_settings, armature_settings, leaf_settings, attachment, baseSize, tree_curve, scale_val)
 
     # Set curve resolution
-    cu.resolution_u = tree_settings.resU
+    tree_curve.resolution_u = tree_settings.resU
 
     # If we need to add leaves, we do it here
-    leafMesh, leafObj, leafP = add_leafs(childP, leaf_settings, treeOb)
+    leaf_mesh, leaf_mesh_object, leaf_points = add_leafs(child_points, leaf_settings, tree_curve_object)
 
     armature_settings.armLevels = min(armature_settings.armLevels, tree_settings.levels)
     armature_settings.armLevels -= 1
 
-    # unpack vars from splineToBone
-    splineToBone1 = splineToBone
-    splineToBone = [s[0] if len(s) > 1 else s for s in splineToBone1]
+    # unpack vars from spline_to_bone
+    spline_to_bone1 = spline_to_bone
+    spline_to_bone = [s[0] if len(s) > 1 else s for s in spline_to_bone1]
 
     # add mesh object
-    treeObj = None
+    tree_mesh_object = None
+    tree_mesh = None
     if armature_settings.makeMesh:
-        treeMesh = bpy.data.meshes.new('treemesh')
-        treeObj = bpy.data.objects.new('treemesh', treeMesh)
-        bpy.context.scene.collection.objects.link(treeObj)
+        tree_mesh = bpy.data.meshes.new('treemesh')
+        tree_mesh_object = bpy.data.objects.new('treemesh', tree_mesh)
+        bpy.context.scene.collection.objects.link(tree_mesh_object)
         if not armature_settings.useArm:
-            treeObj.location=bpy.context.scene.cursor.location
+            tree_mesh_object.location = bpy.context.scene.cursor.location
 
+    armature_object = None
     # If we need an armature we add it
     if armature_settings.useArm:
         # Create the armature and objects
-        armOb = create_armature(armature_settings, leafP, cu, leafMesh, leafObj, leaf_settings.leafVertSize, leaf_settings.leaves, levelCount, splineToBone, treeOb, treeObj)
+        armature_object = create_armature(armature_settings, leaf_points, tree_curve, leaf_mesh, leaf_mesh_object, leaf_settings.leafVertSize, leaf_settings.leaves, level_count, spline_to_bone, tree_curve_object, tree_mesh_object)
 
-    #print(time.time()-startTime)
+    # print(time.time()-startTime)
 
-    #mesh branches
+    # Mesh branches
     if armature_settings.makeMesh:
-        make_armature_mesh(armOb, armature_settings, cu, levelCount, splineToBone, treeMesh, treeObj, tree_settings)
+        make_armature_mesh(armature_settings, tree_settings, armature_object, tree_curve, level_count, spline_to_bone, tree_mesh, tree_mesh_object)

@@ -2,12 +2,13 @@ import time
 from collections import OrderedDict
 
 from .utils import eval_bez, round_bone
+from .TreeSettings import TreeSettings
+from .ArmatureSettings import ArmatureSettings
 
 
-def make_armature_mesh(armOb, armature_settings, cu, levelCount, splineToBone,
-                       treeMesh, treeObj, tree_settings):
-    splineToBone1 = splineToBone
-    splineToBone = [s[0] if len(s) > 1 else s for s in splineToBone1]
+def make_armature_mesh(armature_settings, tree_settings, armature_object, tree_curve, level_count, spline_to_bone, tree_mesh, tree_mesh_object):
+    splineToBone1 = spline_to_bone
+    spline_to_bone = [s[0] if len(s) > 1 else s for s in splineToBone1]
     isend = [s[1] if len(s) > 1 else False for s in splineToBone1]
     issplit = [s[2] if len(s) > 2 else False for s in splineToBone1]
     splitPidx = [s[3] if len(s) > 2 else 0 for s in splineToBone1]
@@ -22,14 +23,14 @@ def make_armature_mesh(armOb, armature_settings, cu, levelCount, splineToBone,
     # vertex group for each level
     levelGroups = []
     for lvl in range(tree_settings.levels):
-        treeObj.vertex_groups.new(name="Branching Level " + str(lvl))
+        tree_mesh_object.vertex_groups.new(name="Branching Level " + str(lvl))
         levelGroups.append([])
-    for i, tree_settings.curve in enumerate(cu.splines):
+    for i, tree_settings.curve in enumerate(tree_curve.splines):
         points = tree_settings.curve.bezier_points
 
         # find branching level
         level = 0
-        for l, c in enumerate(levelCount):
+        for l, c in enumerate(level_count):
             if i < c:
                 level = l
                 break
@@ -42,10 +43,10 @@ def make_armature_mesh(armOb, armature_settings, cu, levelCount, splineToBone,
 
         # add extra vertex for splits
         if issplit[i]:
-            pb = int(splineToBone[i][4:-4])
+            pb = int(spline_to_bone[i][4:-4])
             pn = splitPidx[i]  # int(splineToBone[i][-3:])
-            p_1 = cu.splines[pb].bezier_points[pn]
-            p_2 = cu.splines[pb].bezier_points[pn + 1]
+            p_1 = tree_curve.splines[pb].bezier_points[pn]
+            p_2 = tree_curve.splines[pb].bezier_points[pn + 1]
             p = eval_bez(p_1.co, p_1.handle_right, p_2.handle_left, p_2.co, 1 - 1 / (tree_settings.resU + 1))
             treeVerts.append(p)
 
@@ -55,7 +56,7 @@ def make_armature_mesh(armOb, armature_settings, cu, levelCount, splineToBone,
             vindex += 1
 
         if isend[i]:
-            parent = lastVerts[int(splineToBone[i][4:-4])]
+            parent = lastVerts[int(spline_to_bone[i][4:-4])]
             vindex -= 1
         else:
             # add first point
@@ -64,15 +65,15 @@ def make_armature_mesh(armOb, armature_settings, cu, levelCount, splineToBone,
             vert_radius.append((p1.radius, p1.radius))
 
         # dont make vertex group if above armLevels
-        if (i >= levelCount[armature_settings.armLevels]):
+        if (i >= level_count[armature_settings.armLevels]):
             idx = i
-            groupName = splineToBone[idx]
+            groupName = spline_to_bone[idx]
             g = True
             while groupName not in vertexGroups:
                 # find parent bone of parent bone
-                b = splineToBone[idx]
+                b = spline_to_bone[idx]
                 idx = int(b[4:-4])
-                groupName = splineToBone[idx]
+                groupName = spline_to_bone[idx]
         else:
             g = False
 
@@ -88,7 +89,7 @@ def make_armature_mesh(armOb, armature_settings, cu, levelCount, splineToBone,
                 if g:
                     vertexGroups[groupName].append(vindex - 1)
                 else:
-                    vertexGroups[splineToBone[i]].append(vindex - 1)
+                    vertexGroups[spline_to_bone[i]].append(vindex - 1)
                 levelGroups[level].append(vindex - 1)
 
             for f in range(1, tree_settings.resU + 1):
@@ -115,28 +116,28 @@ def make_armature_mesh(armOb, armature_settings, cu, levelCount, splineToBone,
             p1 = p2
 
         lastVerts.append(len(treeVerts) - 1)
-    treeMesh.from_pydata(treeVerts, treeEdges, ())
+    tree_mesh.from_pydata(treeVerts, treeEdges, ())
     if armature_settings.useArm:
         for group in vertexGroups:
-            treeObj.vertex_groups.new(name=group)
-            treeObj.vertex_groups[group].add(vertexGroups[group], 1.0, 'ADD')
+            tree_mesh_object.vertex_groups.new(name=group)
+            tree_mesh_object.vertex_groups[group].add(vertexGroups[group], 1.0, 'ADD')
     for i, g in enumerate(levelGroups):
-        treeObj.vertex_groups["Branching Level " + str(i)].add(g, 1.0, 'ADD')
+        tree_mesh_object.vertex_groups["Branching Level " + str(i)].add(g, 1.0, 'ADD')
     # add armature
     if armature_settings.useArm:
-        armMod = treeObj.modifiers.new('windSway', 'ARMATURE')
+        armMod = tree_mesh_object.modifiers.new('windSway', 'ARMATURE')
         if armature_settings.previewArm:
-            armOb.hide_viewport = True
-            armOb.data.display_type = 'STICK'
-        armMod.object = armOb
+            armature_object.hide_viewport = True
+            armature_object.data.display_type = 'STICK'
+        armMod.object = armature_object
         armMod.use_bone_envelopes = False
         armMod.use_vertex_groups = True
     # add skin modifier and set data
-    skinMod = treeObj.modifiers.new('Skin', 'SKIN')
+    skinMod = tree_mesh_object.modifiers.new('Skin', 'SKIN')
     skinMod.use_smooth_shade = True
     if armature_settings.previewArm:
         skinMod.show_viewport = False
-    skindata = treeObj.data.skin_vertices[0].data
+    skindata = tree_mesh_object.data.skin_vertices[0].data
     for i, radius in enumerate(vert_radius):
         skindata[i].radius = radius
         skindata[i].use_root = root_vert[i]

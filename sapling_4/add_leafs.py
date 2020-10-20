@@ -65,17 +65,17 @@ def add_leafs(child_points: List[ChildPoint], leaf_settings: LeafSettings, tree_
 
         # add leaf UVs
         if leaf_settings.leafShape == 'rect' or leaf_settings.leafShape == 'hex':
-            unwrap_leaf_uvs(leaf_faces, leaf_mesh, leaf_settings)
+            unwrap_leaf_uvs(leaf_settings, leaf_faces, leaf_mesh)
 
         leaf_mesh.validate()
 
     return leaf_mesh, leaf_obj, leaf_points
 
 
-def unwrap_leaf_uvs(leaf_faces, leaf_mesh, leaf_settings: LeafSettings):
+def unwrap_leaf_uvs(leaf_settings: LeafSettings, leaf_faces, leaf_mesh):
     leaf_mesh.uv_layers.new(name='leafUV')
     uv_layer = leaf_mesh.uv_layers.active.data
-    u1 = .5 * (1 - leaf_settings.leaf_scale_x)
+    u1 = .5 * (1 - leaf_settings.leafScaleX)
 
     x_adj: List[float] = []
     base_x: List[float] = []
