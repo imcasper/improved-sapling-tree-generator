@@ -39,13 +39,16 @@ def gen_leaf_mesh(leaf_settings: LeafSettings, loc, quat, offset, index, old_rot
 
     if leaf_settings.leafType in ['0', '5']:
         old_rot += radians(137.5)
+
     elif leaf_settings.leafType == '1':
         if leaf_number % 2:
             old_rot += radians(180)
         else:
             old_rot += radians(137.5)
+
     elif leaf_settings.leafType in ['2', '3']:
         old_rot = -copysign(leaf_settings.leafRotate, old_rot)
+
     elif leaf_settings.leafType == '4':
         rot_mat = Matrix.Rotation(old_rot + uniform(-leaf_settings.leafRotateV, leaf_settings.leafRotateV), 3, 'Y')
         if leaf_settings.leaves == 1:
@@ -99,7 +102,7 @@ def gen_leaf_mesh(leaf_settings: LeafSettings, loc, quat, offset, index, old_rot
     m.rotate(rot_mat)
     m.rotate(quat)
 
-    # convert rotation for upward facing leaves
+    # Convert rotation for upward facing leaves
     if leaf_settings.leafType in ['4', '5']:
         l_rot = m
     else:

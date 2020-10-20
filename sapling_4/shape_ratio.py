@@ -5,26 +5,34 @@ from math import sin, pi
 def shape_ratio(shape, ratio, custom=None):
     if shape == 0:
         return 0.05 + 0.95*ratio #0.2 + 0.8*ratio
+
     elif shape == 1:
         return 0.2 + 0.8*sin(pi*ratio)
+
     elif shape == 2:
         return 0.2 + 0.8*sin(0.5*pi*ratio)
+
     elif shape == 3:
         return 1.0
+
     elif shape == 4:
         return 0.5 + 0.5*ratio
+
     elif shape == 5:
         if ratio <= 0.7:
             return 0.05 + 0.95 * ratio/0.7
         else:
             return 0.05 + 0.95 * (1.0 - ratio)/0.3
+
     elif shape == 6:
         return 1.0 - 0.8*ratio
+
     elif shape == 7:
         if ratio <= 0.7:
             return 0.5 + 0.5*ratio/0.7
         else:
             return 0.5 + 0.5*(1.0 - ratio)/0.3
+
     elif shape == 9: # old custom shape
         r = 1 - ratio
         if r == 1:
@@ -38,6 +46,7 @@ def shape_ratio(shape, ratio, custom=None):
             pos = 1 - (1 - pos) * (1 - pos)
             v = (pos * (custom[1] - custom[0])) + custom[0]
         return v
+
     elif shape == 8:
         r = 1 - ratio
         custom[2] = min(custom[2], .99)
@@ -89,5 +98,6 @@ def shape_ratio(shape, ratio, custom=None):
                 h = h2
             v = ((1-t)**2)*p1 + (2*t*(1-t))*h + (t**2)*p2
         return v
+
     elif shape == 10:
         return 0.5 + 0.5 * (1 - ratio)

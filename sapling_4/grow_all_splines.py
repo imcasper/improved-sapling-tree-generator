@@ -8,7 +8,7 @@ from .LeafSettings import LeafSettings
 from .TreeSettings import TreeSettings
 
 
-def grow_all_splines(tree_settings: TreeSettings, armature_settings: ArmatureSettings, leaf_settings: LeafSettings, attachment, base_size, cu, scale_val):
+def grow_all_splines(tree_settings: TreeSettings, armature_settings: ArmatureSettings, leaf_settings: LeafSettings, attachment, base_size, tree_curve, scale_val):
     global split_error
     child_points = []
     stem_list = []
@@ -20,22 +20,23 @@ def grow_all_splines(tree_settings: TreeSettings, armature_settings: ArmatureSet
         store_n = lvl
         stem_list = deque()
         add_stem = stem_list.append
+
         # If lvl is used as an index to access parameters for the tree it must be at most 3 or it will reference outside the array index
         lvl = min(3, lvl)
         split_error = 0.0
 
-        # closeTip only on last level
+        # Close tip only on last level
         close_tip = all([(lvl == tree_settings.levels - 1), tree_settings.closeTip])
 
         # If this is the first level of growth (the trunk) then we need some special work to begin the tree
         if lvl == 0:
-            kickstart_trunk(tree_settings, add_stem, leaf_settings.leaves, cu, scale_val)
+            kickstart_trunk(tree_settings, add_stem, leaf_settings.leaves, tree_curve, scale_val)
         # If this isn't the trunk then we may have multiple stem to initialize
         else:
             # For each of the points defined in the list of stem starting points we need to grow a stem.
-            fabricate_stems(tree_settings, add_spline_to_bone, add_stem, base_size, child_points, cu, leaf_settings.leafDist, leaf_settings.leaves, leaf_settings.leafType, lvl, scale_val, store_n, armature_settings.boneStep)
+            fabricate_stems(tree_settings, add_spline_to_bone, add_stem, base_size, child_points, tree_curve, leaf_settings.leafDist, leaf_settings.leaves, leaf_settings.leafType, lvl, scale_val, store_n, armature_settings.boneStep)
 
-        # change base size for each level
+        # Change base size for each level
         if lvl > 0:
             base_size = tree_settings.baseSize_s
         if lvl == tree_settings.levels - 1:
@@ -46,5 +47,5 @@ def grow_all_splines(tree_settings: TreeSettings, armature_settings: ArmatureSet
         for stem in stem_list:
             spline_to_bone = grow_branch_level(tree_settings, base_size, child_points, lvl, scale_val, spline_to_bone, stem, close_tip, armature_settings.boneStep, leaf_settings.leaves, leaf_settings.leafType, attachment)
 
-        level_count.append(len(cu.splines))
+        level_count.append(len(tree_curve.splines))
     return child_points, level_count, spline_to_bone

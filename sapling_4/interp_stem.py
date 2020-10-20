@@ -4,7 +4,7 @@ from .utils import eval_bez, eval_bez_tan
 from .ChildPoint import ChildPoint
 
 
-def interp_stem(stem, t_vals, max_offset, base_size):
+def interp_stem(stem, t_values, max_offset, base_size):
     points = stem.spline.bezier_points
     num_segments = len(points) - 1
     stem_len = stem.segL * num_segments
@@ -14,7 +14,7 @@ def interp_stem(stem, t_vals, max_offset, base_size):
 
     # Loop through all the parametric values to be determined
     temp_list = deque()
-    for t in t_vals:
+    for t in t_values:
         if (t >= check_bottom) and (t <= check_top) and (t < 1.0):
             scaled_t = (t - check_bottom) / (check_top - check_bottom)
             offset = ((t - base_size) / (check_top - base_size)) * (1 - base_size) + base_size
@@ -29,7 +29,7 @@ def interp_stem(stem, t_vals, max_offset, base_size):
 
             temp_list.append(ChildPoint(coord, quat, (stem.radS, radius, stem.radE), t, offset, stem.segMax * stem.segL, 'bone' + (str(stem.splN).rjust(3, '0')) + '.' + (str(index).rjust(3, '0'))))
         elif t == 1:
-            #add stems at tip
+            # Add stems at tip
             index = num_segments-1
             coord = points[-1].co
             quat = (points[-1].handle_right - points[-1].co).to_track_quat('Z', 'Y')
