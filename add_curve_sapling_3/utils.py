@@ -27,14 +27,14 @@ from random import random
 tau = 2 * pi
 
 # Initialise the split error and axis vectors
-splitError = 0.0
+split_error = 0.0
 zAxis = Vector((0, 0, 1))
 yAxis = Vector((0, 1, 0))
 xAxis = Vector((1, 0, 0))
 
 # This function determines the actual number of splits at a given point using the global error
 def splits(n):
-    global splitError
+    global split_error
     nEff = round(n + splitError, 0)
     splitError -= (nEff - n)
     return int(nEff)
