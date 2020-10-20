@@ -11,7 +11,7 @@ from .TreeSettings import TreeSettings
 def kickstart_trunk(tree_settings: TreeSettings, addstem, leaves, cu, scaleVal):
     newSpline = cu.splines.new('BEZIER')
     newSpline.material_index = tree_settings.matIndex[0]
-    #cu.resolution_u = resU
+    #cu.resolution_u = tree_settings.resU
     newPoint = newSpline.bezier_points[-1]
     newPoint.co = Vector((0, 0, 0))
 
@@ -38,5 +38,4 @@ def kickstart_trunk(tree_settings: TreeSettings, addstem, leaves, cu, scaleVal):
     endRad = max(endRad, tree_settings.minRadius)
     newPoint.radius = startRad * tree_settings.rootFlare
     addstem(
-        StemSpline(newSpline, curveVal, tree_settings.curveV[0] / tree_settings.curveRes[0], tree_settings.attractUp[0], 0, tree_settings.curveRes[0], branchL / tree_settings.curveRes[0],
-                   childStems, startRad, endRad, 0, 0, None))
+        StemSpline(newSpline, curveVal, tree_settings.curveV[0] / tree_settings.curveRes[0], tree_settings.attractUp[0], 0, tree_settings.curveRes[0], branchL / tree_settings.curveRes[0], childStems, startRad, endRad, 0, 0, None))

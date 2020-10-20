@@ -6,10 +6,11 @@ import bpy
 from mathutils import Vector
 
 from .utils import tau, roundBone
+from .ArmatureSettings import ArmatureSettings
 
 
-def create_armature(armAnim, leafP, cu, frameRate, leafMesh, leafObj, leafVertSize, leaves, levelCount, splineToBone,
-                    treeOb, treeObj, wind, gust, gustF, af1, af2, af3, leafAnim, loopFrames, previewArm, armLevels, makeMesh, boneStep):
+def create_armature(armature_settings: ArmatureSettings, leafP, cu, leafMesh, leafObj, leafVertSize, leaves, levelCount, splineToBone,
+                    treeOb, treeObj):
     arm = bpy.data.armatures.new('tree')
     armOb = bpy.data.objects.new('treeArm', arm)
     armOb.location=bpy.context.scene.cursor.location
@@ -22,7 +23,7 @@ def create_armature(armAnim, leafP, cu, frameRate, leafMesh, leafObj, leafVertSi
     #arm.use_deform_delay = True
     # Add the armature modifier to the curve
     armMod = treeOb.modifiers.new('windSway', 'ARMATURE')
-    if previewArm:
+    if armature_settings.previewArm:
         armMod.show_viewport = False
         arm.display_type = 'WIRE'
         treeOb.hide_viewport = True
@@ -41,14 +42,14 @@ def create_armature(armAnim, leafP, cu, frameRate, leafMesh, leafObj, leafVertSi
         ob.select_set(state=False)
 
     fps = bpy.context.scene.render.fps
-    animSpeed = (24 / fps) * frameRate
+    animSpeed = (24 / fps) * armature_settings.frameRate
 
     # Set the armature as active and go to edit mode to add bones
     bpy.context.view_layer.objects.active = armOb
     bpy.ops.object.mode_set(mode='EDIT')
     # For all the splines in the curve we need to add bones at each bezier point
     for i, parBone in enumerate(splineToBone):
-        if (i < levelCount[armLevels]) or (armLevels == -1) or (not makeMesh):
+        if (i < levelCount[armature_settings.armLevels]) or (armature_settings.armLevels == -1) or (not armature_settings.makeMesh):
             s = cu.splines[i]
             b = None
             # Get some data about the spline like length and number of points
@@ -62,10 +63,10 @@ def create_armature(armAnim, leafP, cu, frameRate, leafMesh, leafObj, leafVertSi
                     break
             level = min(level, 3)
 
-            step = boneStep[level]
+            step = armature_settings.boneStep[level]
 
             # Calculate things for animation
-            if armAnim:
+            if armature_settings.armAnim:
                 splineL = numPoints * ((s.bezier_points[0].co - s.bezier_points[1].co).length)
                 # Set the random phase difference of the animation
                 bxOffset = uniform(0, tau)
@@ -78,8 +79,8 @@ def create_armature(armAnim, leafP, cu, frameRate, leafMesh, leafObj, leafVertSi
 
                 windFreq1 = bMult * animSpeed
                 windFreq2 = 0.7 * bMult * animSpeed
-                if loopFrames != 0:
-                    bMult_l = 1 / (loopFrames / tau)
+                if armature_settings.loopFrames != 0:
+                    bMult_l = 1 / (armature_settings.loopFrames / tau)
                     fRatio = max(1, round(windFreq1 / bMult_l))
                     fgRatio = max(1, round(windFreq2 / bMult_l))
                     windFreq1 = fRatio * bMult_l
@@ -120,18 +121,18 @@ def create_armature(armAnim, leafP, cu, frameRate, leafMesh, leafObj, leafVertSi
                     b.use_connect = False
 
                 # Add the animation to the armature if required
-                if armAnim:
+                if armature_settings.armAnim:
                     # Define all the required parameters of the wind sway by the dimension of the spline
                     #a0 = 4 * splineL * (1 - n / (numPoints + 1)) / max(s.bezier_points[n].radius, 1e-6)
                     a0 = 2 * (splineL / numPoints) * (1 - n / (numPoints + 1)) / max(s.bezier_points[n].radius, 1e-6)
                     a0 = a0 * min(step, numPoints)
                     #a0 = (splineL / numPoints) / max(s.bezier_points[n].radius, 1e-6)
-                    a1 = (wind / 50) * a0
+                    a1 = (armature_settings.wind / 50) * a0
                     a2 = a1 * .65  #(windGust / 50) * a0 + a1 / 2
 
                     p = s.bezier_points[nx].co - s.bezier_points[n].co
                     p.normalize()
-                    ag = (wind * gust / 50) * a0
+                    ag = (armature_settings.wind * armature_settings.gust / 50) * a0
                     a3 = -p[0] * ag
                     a4 = p[2] * ag
 
@@ -141,10 +142,10 @@ def create_armature(armAnim, leafP, cu, frameRate, leafMesh, leafObj, leafVertSi
                     a4 = radians(a4)
 
                     #wind bending
-                    if loopFrames == 0:
-                        swayFreq = gustF * (tau / fps) * frameRate  #animSpeed # .075 # 0.02
+                    if armature_settings.loopFrames == 0:
+                        swayFreq = armature_settings.gustF * (tau / fps) * armature_settings.frameRate  #animSpeed # .075 # 0.02
                     else:
-                        swayFreq = 1 / (loopFrames / tau)
+                        swayFreq = 1 / (armature_settings.loopFrames / tau)
 
                     # Prevent tree base from rotating
                     if (boneName == "bone000.000") or (boneName == "bone000.001"):
@@ -200,14 +201,14 @@ def create_armature(armAnim, leafP, cu, frameRate, leafMesh, leafObj, leafVertSi
         vertexGroups = OrderedDict()
         for i, cp in enumerate(leafP):
             # find leafs parent bone
-            leafParent = roundBone(cp.parBone, boneStep[armLevels])
+            leafParent = roundBone(cp.parBone, armature_settings.boneStep[armature_settings.armLevels])
             idx = int(leafParent[4:-4])
             while leafParent not in bonelist:
                 #find parent bone of parent bone
                 leafParent = splineToBone[idx]
                 idx = int(leafParent[4:-4])
 
-            if leafAnim:
+            if armature_settings.leafAnim:
                 bname = "leaf" + str(i)
                 b = arm.edit_bones.new(bname)
                 b.head = cp.co
@@ -217,15 +218,15 @@ def create_armature(armAnim, leafP, cu, frameRate, leafMesh, leafObj, leafVertSi
 
                 vertexGroups[bname] = [v.index for v in leafMesh.vertices[leafVertSize * i:(leafVertSize * i + leafVertSize)]]
 
-                if armAnim:
+                if armature_settings.armAnim:
                     # Define all the required parameters of the wind sway by the dimension of the spline
-                    a1 = wind * .25
-                    a1 *= af1
+                    a1 = armature_settings.wind * .25
+                    a1 *= armature_settings.af1
 
                     bMult = (1 / animSpeed) * 6
-                    bMult *= 1 / max(af2, .001)
+                    bMult *= 1 / max(armature_settings.af2, .001)
 
-                    ofstRand = af3
+                    ofstRand = armature_settings.af3
                     bxOffset = uniform(-ofstRand, ofstRand)
                     byOffset = uniform(-ofstRand, ofstRand)
 
@@ -243,13 +244,13 @@ def create_armature(armAnim, leafP, cu, frameRate, leafMesh, leafObj, leafVertSi
                     swayXMod = swayX.modifiers.new(type='NOISE')
                     swayYMod = swayY.modifiers.new(type='NOISE')
 
-                    if loopFrames != 0:
+                    if armature_settings.loopFrames != 0:
                         swayXMod.use_restricted_range = True
-                        swayXMod.frame_end = loopFrames
+                        swayXMod.frame_end = armature_settings.loopFrames
                         swayXMod.blend_in = 4
                         swayXMod.blend_out = 4
                         swayYMod.use_restricted_range = True
-                        swayYMod.frame_end = loopFrames
+                        swayYMod.frame_end = armature_settings.loopFrames
                         swayYMod.blend_in = 4
                         swayYMod.blend_out = 4
 
@@ -276,7 +277,7 @@ def create_armature(armAnim, leafP, cu, frameRate, leafMesh, leafObj, leafVertSi
         p.rotation_mode = 'XYZ'
 
     treeOb.parent = armOb
-    if makeMesh:
+    if armature_settings.makeMesh:
         treeObj.parent = armOb
 
     return armOb

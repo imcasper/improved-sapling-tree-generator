@@ -1,25 +1,44 @@
+import copy
 from math import floor
-from random import setstate, uniform
+from random import setstate, uniform, getstate
 
 from .utils import splits2
-from .grow_spline import grow_spline
 from .shape_ratio import shape_ratio
 from .find_child_points import find_child_points, find_child_points2, find_child_points3
+from .grow_spline import grow_spline
 from .interp_stem import interp_stem
+from .TreeSettings import TreeSettings
 
 
-def perform_pruning(baseSize, baseSplits, childP, cu, currentMax, currentMin, currentScale, curve, curveBack, curveRes,
-                    deleteSpline, forceSprout, handles, n, levels, branches, oldMax, originalSplineToBone, originalCo, originalCurv,
-                    originalCurvV, originalHandleL, originalHandleR, originalLength, originalSeg, prune, prunePowerHigh,
-                    prunePowerLow, pruneRatio, pruneWidth, pruneBase, pruneWidthPeak, randState, ratio, scaleVal, segSplits,
-                    splineToBone, splitAngle, splitAngleV, st, startPrune, branchDist, length, splitByLen, closeTip, splitRadiusRatio, minRadius, nrings,
-                    splitBias, splitHeight, attractOut, rMode, splitStraight, splitLength, lengthV, taperCrown, noTip, boneStep, rotate, rotateV, leaves, leafType, matIndex):
+def perform_pruning(tree_settings: TreeSettings, baseSize, childP, cu, n, scaleVal,
+                    splineToBone, st, closeTip, boneStep, leaves, leafType):
+    # When using pruning, we need to ensure that the random effects will be the same for each iteration to make sure the problem is linear.
+    randState = getstate()
+    startPrune = True
+    lengthTest = 0.0
+    # Store all the original values for the stem to make sure we have access after it has been modified by pruning
+    originalLength = st.segL
+    originalCurv = st.curv
+    originalCurvV = st.curvV
+    originalSeg = st.seg
+    originalHandleR = st.p.handle_right.copy()
+    originalHandleL = st.p.handle_left.copy()
+    originalCo = st.p.co.copy()
+    currentMax = 1.0
+    currentMin = 0.0
+    currentScale = 1.0
+    oldMax = 1.0
+    deleteSpline = False
+    originalSplineToBone = copy.copy(splineToBone)
+    forceSprout = False
+
+    ratio = tree_settings.ratio
     while startPrune and ((currentMax - currentMin) > 0.005):
         setstate(randState)
 
         # If the search will halt after this iteration, then set the adjustment of stem length to take into account the pruning ratio
         if (currentMax - currentMin) < 0.01:
-            currentScale = (currentScale - 1) * pruneRatio + 1
+            currentScale = (currentScale - 1) * tree_settings.pruneRatio + 1
             startPrune = False
             forceSprout = True
         # Change the segment length of the stem by applying some scaling
@@ -52,21 +71,21 @@ def perform_pruning(baseSize, baseSplits, childP, cu, currentMax, currentMin, cu
         # Initialise the spline list of split stems in the current branch
         splineList = [st]
         # For each of the segments of the stem which must be grown we have to add to each spline in splineList
-        for k in range(curveRes[n]):
+        for k in range(tree_settings.curveRes[n]):
             # Make a copy of the current list to avoid continually adding to the list we're iterating over
             tempList = splineList[:]
             # print('Leng: ', len(tempList))
 
             #for curve variation
-            if curveRes[n] > 1:
-                kp = (k / (curveRes[n] - 1)) # * 2
+            if tree_settings.curveRes[n] > 1:
+                kp = (k / (tree_settings.curveRes[n] - 1)) # * 2
             else:
                 kp = 1.0
 
             #split bias
-            splitValue = segSplits[n]
+            splitValue = tree_settings.segSplits[n]
             if n == 0:
-                splitValue = ((2 * splitBias) * (kp - .5) + 1) * splitValue
+                splitValue = ((2 * tree_settings.splitBias) * (kp - .5) + 1) * splitValue
                 splitValue = max(splitValue, 0.0)
 
             # For each of the splines in this list set the number of splits and then grow it
@@ -83,41 +102,40 @@ def perform_pruning(baseSize, baseSplits, childP, cu, currentMax, currentMin, cu
                 if k == 0:
                     numSplit = 0
                 elif (k == 1) and (n == 0):
-                    numSplit = baseSplits
-                elif (n == 0) and (k == int((curveRes[n]) * splitHeight)) and (splitVal > 0): #always split at splitHeight
+                    numSplit = tree_settings.baseSplits
+                elif (n == 0) and (k == int((tree_settings.curveRes[n]) * tree_settings.splitHeight)) and (splitVal > 0): #always split at splitHeight
                     numSplit = 1
-                elif (n == 0) and (k < ((curveRes[n]) * splitHeight)) and (k != 1): #splitHeight
+                elif (n == 0) and (k < ((tree_settings.curveRes[n]) * tree_settings.splitHeight)) and (k != 1): #splitHeight
                     numSplit = 0
                 else:
-                    if (n >= 0) and splitByLen:
-                        L = ((spl.segL * curveRes[n]) / scaleVal)
+                    if (n >= 0) and tree_settings.splitByLen:
+                        L = ((spl.segL * tree_settings.curveRes[n]) / scaleVal)
                         lf = 1
-                        for l in length[:n+1]:
+                        for l in tree_settings.length[:n+1]:
                             lf *= l
                         L = L / lf
                         numSplit = splits2(splitVal * L)
                     else:
                         numSplit = splits2(splitVal)
 
-                if (k == int(curveRes[n] / 2 + 0.5)) and (curveBack[n] != 0):
-                    spl.curv += 2 * (curveBack[n] / curveRes[n]) #was -4 *
+                if (k == int(tree_settings.curveRes[n] / 2 + 0.5)) and (tree_settings.curveBack[n] != 0):
+                    spl.curv += 2 * (tree_settings.curveBack[n] / tree_settings.curveRes[n]) #was -4 *
 
-                grow_spline(n, spl, numSplit, splitAngle[n], splitAngleV[n], splitStraight, splineList, handles, splineToBone,
-                            closeTip, splitRadiusRatio, minRadius, kp, splitHeight, attractOut[n], stemsegL, splitLength, lengthV[n], taperCrown, boneStep, rotate, rotateV, matIndex)
+                grow_spline(tree_settings, n, spl, numSplit, splineList, splineToBone, closeTip, kp, stemsegL, boneStep)
 
         # If pruning is enabled then we must to the check to see if the end of the spline is within the evelope
-        if prune:
+        if tree_settings.prune:
             # Check each endpoint to see if it is inside
             for s in splineList:
                 coordMag = (s.spline.bezier_points[-1].co.xy).length
-                ratio = (scaleVal - s.spline.bezier_points[-1].co.z) / (scaleVal * max(1 - pruneBase, 1e-6))
+                ratio = (scaleVal - s.spline.bezier_points[-1].co.z) / (scaleVal * max(1 - tree_settings.pruneBase, 1e-6))
                 # Don't think this if part is needed
-                if (n == 0) and (s.spline.bezier_points[-1].co.z < pruneBase * scaleVal):
+                if (n == 0) and (s.spline.bezier_points[-1].co.z < tree_settings.pruneBase * scaleVal):
                     insideBool = True  # Init to avoid UnboundLocalError later
                 else:
                     insideBool = (
-                            (coordMag / scaleVal) < pruneWidth * shape_ratio(9, ratio, pruneWidthPeak, prunePowerHigh,
-                                                                             prunePowerLow))
+                            (coordMag / scaleVal) < tree_settings.pruneWidth * shape_ratio(9, ratio, tree_settings.pruneWidthPeak, tree_settings.prunePowerHigh,
+                                                                             tree_settings.prunePowerLow))
                 # If the point is not inside then we adjust the scale and current search bounds
                 if not insideBool:
                     oldMax = currentMax
@@ -133,12 +151,12 @@ def perform_pruning(baseSize, baseSplits, childP, cu, currentMax, currentMin, cu
                 currentMin = 1
 
         # If the search will halt on the next iteration then we need to make sure we sprout child points to grow the next splines or leaves
-        if (((currentMax - currentMin) < 0.005) or not prune) or forceSprout:
-            if (n == 0) and (rMode in ['rotate', 'random']):
+        if (((currentMax - currentMin) < 0.005) or not tree_settings.prune) or forceSprout:
+            if (n == 0) and (tree_settings.rMode in ['rotate', 'random']):
                 tVals = find_child_points2(st.children)
-            elif (n == 0) and (rMode == 'distance'):
+            elif (n == 0) and (tree_settings.rMode == 'distance'):
                 tVals = find_child_points3(splineList, st.children)
-            elif (n == levels - 1) and (leafType in ['1', '3']):
+            elif (n == tree_settings.levels - 1) and (leafType in ['1', '3']):
                 tVal = find_child_points(splineList, st.children // 2)
                 tVals = []
                 for t in tVal[:-1]:
@@ -153,33 +171,33 @@ def perform_pruning(baseSize, baseSplits, childP, cu, currentMax, currentMin, cu
 
             if 1 not in tVals:
                 tVals.append(1.0)
-            if (n != levels - 1) and (branches[min(3, n+1)] == 0):
+            if (n != tree_settings.levels - 1) and (tree_settings.branches[min(3, n+1)] == 0):
                 tVals = []
 
-            if (n < levels - 1) and noTip:
+            if (n < tree_settings.levels - 1) and tree_settings.noTip:
                 tVals = tVals[:-1]
 
             # remove some of the points because of baseSize
-            if (n == 0) and (rMode == 'distance'):
+            if (n == 0) and (tree_settings.rMode == 'distance'):
                 tVals = [t for t in tVals if t > baseSize]
             else:
                 trimNum = int(baseSize * (len(tVals) + 1))
                 tVals = tVals[trimNum:]
 
             #grow branches in rings/whorls
-            if (n == 0) and (nrings > 0):
-                tVals = [(floor(t * nrings) / nrings) * uniform(.995, 1.005) for t in tVals[:-1]]
-                if not noTip:
+            if (n == 0) and (tree_settings.nrings > 0):
+                tVals = [(floor(t * tree_settings.nrings) / tree_settings.nrings) * uniform(.995, 1.005) for t in tVals[:-1]]
+                if not tree_settings.noTip:
                     tVals.append(1)
                 tVals = [t for t in tVals if t > baseSize]
 
             #branch distribution
             if n == 0:
                 tVals = [((t - baseSize) / (1 - baseSize)) for t in tVals]
-                if branchDist < 1.0:
-                    tVals = [t ** (1 / branchDist) for t in tVals]
+                if tree_settings.branchDist < 1.0:
+                    tVals = [t ** (1 / tree_settings.branchDist) for t in tVals]
                 else:
-                    tVals = [1 - (1 - t) ** branchDist for t in tVals]
+                    tVals = [1 - (1 - t) ** tree_settings.branchDist for t in tVals]
                 tVals = [t * (1 - baseSize) + baseSize for t in tVals]
 
             # For all the splines, we interpolate them and add the new points to the list of child points
@@ -191,6 +209,6 @@ def perform_pruning(baseSize, baseSplits, childP, cu, currentMax, currentMin, cu
         # Force the splines to be deleted
         deleteSpline = True
         # If pruning isn't enabled then make sure it doesn't loop
-        if not prune:
+        if not tree_settings.prune:
             startPrune = False
     return ratio, splineToBone

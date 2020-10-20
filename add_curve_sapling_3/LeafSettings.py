@@ -22,3 +22,10 @@ class LeafSettings:
         self.leafObjY = props.leafObjY
         self.leafObjZ = props.leafObjZ
         self.leafObjRot = leaf_rot(self.leafObjY, self.leafObjZ)
+
+        self.leafVertSize = {'hex': 6, 'rect': 4, 'dFace': 4, 'dVert': 1}[self.leafShape]
+
+        self.leaves = 0
+        if props.showLeaves:
+            self.leaves = props.leaves
+

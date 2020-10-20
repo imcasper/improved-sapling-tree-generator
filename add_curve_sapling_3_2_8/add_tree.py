@@ -1,4 +1,3 @@
-import copy
 import time
 from collections import deque, OrderedDict
 from math import radians, copysign
@@ -15,9 +14,9 @@ from .fabricate_stems import fabricate_stems
 from .gen_leaf_mesh import gen_leaf_mesh
 from .create_armature import create_armature
 from .find_taper import find_taper
-from .leaf_rot import leaf_rot
 from .TreeSettings import TreeSettings
-
+from .LeafSettings import LeafSettings
+from .ArmatureSettings import ArmatureSettings
 
 
 def add_tree(props):
@@ -28,102 +27,20 @@ def add_tree(props):
 
     # Set all other variables
     tree_settings = TreeSettings(props)
-
-    baseSplits = props.baseSplits#
-
-    scale = props.scale#
-    scaleV = props.scaleV#
+    leaf_settings = LeafSettings(props)
+    armature_settings = ArmatureSettings(props)
 
     baseSize = props.baseSize
     baseSize_s = props.baseSize_s
     leafBaseSize = props.leafBaseSize
 
-    closeTip = props.closeTip
-
-    autoTaper = props.autoTaper
-
-    noTip = props.noTip
-
-    prune = props.prune#
-    pruneWidth = props.pruneWidth#
     pruneBase = props.pruneBase
-    pruneWidthPeak = props.pruneWidthPeak#
-    prunePowerLow = props.prunePowerLow#
-    prunePowerHigh = props.prunePowerHigh#
-
-    leafType = props.leafType
-    leafDownAngle = radians(props.leafDownAngle)
-    leafDownAngleV = radians(props.leafDownAngleV)
-    leafRotate = radians(props.leafRotate)
-    leafRotateV = radians(props.leafRotateV)
-    leafScale = props.leafScale#
-    leafScaleX = props.leafScaleX#
-    leafScaleT = props.leafScaleT
-    leafScaleV = props.leafScaleV
-    leafShape = props.leafShape
-    leafDupliObj = props.leafDupliObj
-    leafangle = props.leafangle
-    horzLeaves = props.horzLeaves
-    leafDist = int(props.leafDist)#
-    bevelRes = props.bevelRes#
-    resU = props.resU#
-
-    #leafObjX = props.leafObjX
-    leafObjY = props.leafObjY
-    leafObjZ = props.leafObjZ
-
-    useArm = props.useArm
-    previewArm = props.previewArm
-    armAnim = props.armAnim
-    leafAnim = props.leafAnim
-    frameRate = props.frameRate
-    loopFrames = props.loopFrames
-
-    #windSpeed = props.windSpeed
-    #windGust = props.windGust
-
-    wind = props.wind
-    gust = props.gust
-    gustF = props.gustF
-
-    af1 = props.af1
-    af2 = props.af2
-    af3 = props.af3
-
-    makeMesh = props.makeMesh
-    armLevels = props.armLevels
-    boneStep = props.boneStep
-    matIndex = props.matIndex
-
-    useOldDownAngle = props.useOldDownAngle
-    useParentAngle = props.useParentAngle
-
-    if not makeMesh:
-        boneStep = [1, 1, 1, 1]
 
     #taper
-    if autoTaper:
-        taper = find_taper(tree_settings)
+    if tree_settings.autoTaper:
+        tree_settings.taper = find_taper(tree_settings)
 
     leafObj = None
-
-    leafObjRot = leaf_rot(leafObjY, leafObjZ)
-
-    # Some effects can be turned ON and OFF, the necessary variables are changed here
-    if not props.bevel:
-        bevelDepth = 0.0
-    else:
-        bevelDepth = 1.0
-
-    if not props.showLeaves:
-        leaves = 0
-    else:
-        leaves = props.leaves
-
-    if props.handleType == '0':
-        handles = 'AUTO'
-    else:
-        handles = 'VECTOR'
 
     for ob in bpy.data.objects:
         ob.select_set(state=False)
@@ -132,223 +49,38 @@ def add_tree(props):
     cu = bpy.data.curves.new('tree', 'CURVE')
     treeOb = bpy.data.objects.new('tree', cu)
     bpy.context.scene.collection.objects.link(treeOb)
-    if not useArm:
+    if not armature_settings.useArm:
         treeOb.location=bpy.context.scene.cursor.location
 
     cu.dimensions = '3D'
     cu.fill_mode = 'FULL'
-    cu.bevel_depth = bevelDepth
-    cu.bevel_resolution = bevelRes
+    cu.bevel_depth = tree_settings.bevelDepth
+    cu.bevel_resolution = tree_settings.bevelRes
     # cu.use_uv_as_generated = True # removed 2.82
 
     #material slots
-    for i in range(max(matIndex)+1):
+    for i in range(max(tree_settings.matIndex)+1):
         treeOb.data.materials.append(None)
 
     # Fix the scale of the tree now
-    scaleVal = scale + uniform(-scaleV, scaleV)
+    scaleVal = tree_settings.scale + uniform(-tree_settings.scaleV, tree_settings.scaleV)
     scaleVal += copysign(1e-6, scaleVal)  # Move away from zero to avoid div by zero
 
     pruneBase = min(pruneBase, baseSize)
     # If pruning is turned on we need to draw the pruning envelope
-    if prune:
-        enHandle = 'VECTOR'
-        enNum = 128
-        enCu = bpy.data.curves.new('envelope', 'CURVE')
-        enOb = bpy.data.objects.new('envelope', enCu)
-        enOb.parent = treeOb
-        bpy.context.scene.collection.objects.link(enOb)
-        newSpline = enCu.splines.new('BEZIER')
-        newPoint = newSpline.bezier_points[-1]
-        newPoint.co = Vector((0, 0, scaleVal))
-        (newPoint.handle_right_type, newPoint.handle_left_type) = (enHandle, enHandle)
-        # Set the coordinates by varying the z value, envelope will be aligned to the x-axis
-        for c in range(enNum):
-            newSpline.bezier_points.add(1)
-            newPoint = newSpline.bezier_points[-1]
-            ratioVal = (c+1)/(enNum)
-            zVal = scaleVal - scaleVal*(1-pruneBase)*ratioVal
-            newPoint.co = Vector((scaleVal * pruneWidth * shape_ratio(9, ratioVal, pruneWidthPeak, prunePowerHigh, prunePowerLow), 0, zVal))
-            (newPoint.handle_right_type, newPoint.handle_left_type) = (enHandle, enHandle)
-        newSpline = enCu.splines.new('BEZIER')
-        newPoint = newSpline.bezier_points[-1]
-        newPoint.co = Vector((0, 0, scaleVal))
-        (newPoint.handle_right_type, newPoint.handle_left_type) = (enHandle, enHandle)
-        # Create a second envelope but this time on the y-axis
-        for c in range(enNum):
-            newSpline.bezier_points.add(1)
-            newPoint = newSpline.bezier_points[-1]
-            ratioVal = (c+1)/(enNum)
-            zVal = scaleVal - scaleVal*(1-pruneBase)*ratioVal
-            newPoint.co = Vector((0, scaleVal * pruneWidth * shape_ratio(9, ratioVal, pruneWidthPeak, prunePowerHigh, prunePowerLow), zVal))
-            (newPoint.handle_right_type, newPoint.handle_left_type) = (enHandle, enHandle)
-
-
-    childP = []
-    stemList = []
-
-    levelCount = []
-    splineToBone = deque([''])
-    addsplinetobone = splineToBone.append
+    if tree_settings.prune:
+        create_pruning_envelope(pruneBase, scaleVal, treeOb, tree_settings)
 
     # Each of the levels needed by the user we grow all the splines
-    for n in range(tree_settings.levels):
-        storeN = n
-        stemList = deque()
-        addstem = stemList.append
-        # If n is used as an index to access parameters for the tree it must be at most 3 or it will reference outside the array index
-        n = min(3, n)
-        splitError = 0.0
+    childP, levelCount, splineToBone = grow_all_splines(baseSize, baseSize_s, armature_settings.boneStep, cu, leafBaseSize, leaf_settings, scaleVal, tree_settings)
 
-        #closeTip only on last level
-        closeTipp = all([(n == tree_settings.levels-1), closeTip])
-
-        # If this is the first level of growth (the trunk) then we need some special work to begin the tree
-        if n == 0:
-            kickstart_trunk(tree_settings, addstem, leaves, cu, scaleVal)
-        # If this isn't the trunk then we may have multiple stem to initialize
-        else:
-            # For each of the points defined in the list of stem starting points we need to grow a stem.
-            fabricate_stems(tree_settings, addsplinetobone, addstem, baseSize, childP, cu, leafDist,
-                            leaves, leafType, n, scaleVal, storeN,
-                            boneStep)
-
-        #change base size for each level
-        if n > 0:
-            baseSize *= baseSize_s #decrease at each level
-        if (n == tree_settings.levels - 1):
-            baseSize = leafBaseSize
-
-        childP = []
-        # Now grow each of the stems in the list of those to be extended
-        for st in stemList:
-            # When using pruning, we need to ensure that the random effects will be the same for each iteration to make sure the problem is linear.
-            randState = getstate()
-            startPrune = True
-            lengthTest = 0.0
-            # Store all the original values for the stem to make sure we have access after it has been modified by pruning
-            originalLength = st.segL
-            originalCurv = st.curv
-            originalCurvV = st.curvV
-            originalSeg = st.seg
-            originalHandleR = st.p.handle_right.copy()
-            originalHandleL = st.p.handle_left.copy()
-            originalCo = st.p.co.copy()
-            currentMax = 1.0
-            currentMin = 0.0
-            currentScale = 1.0
-            oldMax = 1.0
-            deleteSpline = False
-            originalSplineToBone = copy.copy(splineToBone)
-            forceSprout = False
-            # Now do the iterative pruning, this uses a binary search and halts once the difference between upper and lower bounds of the search are less than 0.005
-            ratio, splineToBone = perform_pruning(tree_settings, baseSize, baseSplits, childP, cu, n, scaleVal,
-                                                  splineToBone, st, closeTipp, noTip, boneStep, leaves, leafType)
-
-        levelCount.append(len(cu.splines))
-
-    cu.resolution_u = resU
+    cu.resolution_u = tree_settings.resU
 
     # If we need to add leaves, we do it here
-    leafVerts = []
-    leafFaces = []
-    leafNormals = []
+    leafMesh, leafObj, leafP = add_leafs(childP, leafObj, leaf_settings, treeOb)
 
-    leafMesh = None # in case we aren't creating leaves, we'll still have the variable
-
-    leafP = []
-    if leaves:
-        oldRot = 0.0
-        n = min(3, n+1)
-        # For each of the child points we add leaves
-        for ln, cp in enumerate(childP):
-            # If the special flag is set then we need to add several leaves at the same location
-            if leafType == '4':
-                oldRot = -leafRotate / 2
-                for g in range(abs(leaves)):
-                    (vertTemp, faceTemp, normal, oldRot) = gen_leaf_mesh(leafScale, leafScaleX, leafScaleT, leafScaleV, cp.co, cp.quat, cp.offset,
-                                                                         len(leafVerts), leafDownAngle, leafDownAngleV, leafRotate, leafRotateV,
-                                                                         oldRot, leaves, leafShape, leafangle, horzLeaves, leafType, ln, leafObjRot)
-                    leafVerts.extend(vertTemp)
-                    leafFaces.extend(faceTemp)
-                    leafNormals.extend(normal)
-                    leafP.append(cp)
-            # Otherwise just add the leaves like splines.
-            else:
-                (vertTemp, faceTemp, normal, oldRot) = gen_leaf_mesh(leafScale, leafScaleX, leafScaleT, leafScaleV, cp.co, cp.quat, cp.offset,
-                                                                     len(leafVerts), leafDownAngle, leafDownAngleV, leafRotate, leafRotateV,
-                                                                     oldRot, leaves, leafShape, leafangle, horzLeaves, leafType, ln, leafObjRot)
-                leafVerts.extend(vertTemp)
-                leafFaces.extend(faceTemp)
-                leafNormals.extend(normal)
-                leafP.append(cp)
-
-        # Create the leaf mesh and object, add geometry using from_pydata, edges are currently added by validating the mesh which isn't great
-        leafMesh = bpy.data.meshes.new('leaves')
-        leafObj = bpy.data.objects.new('leaves', leafMesh)
-        bpy.context.scene.collection.objects.link(leafObj)
-        leafObj.parent = treeOb
-        leafMesh.from_pydata(leafVerts, (), leafFaces)
-
-        #set vertex normals for dupliVerts
-        if leafShape == 'dVert':
-            leafMesh.vertices.foreach_set('normal', leafNormals)
-
-        # enable duplication
-        if leafShape == 'dFace':
-            leafObj.instance_type = "FACES"
-            leafObj.use_instance_faces_scale = True
-            leafObj.instance_faces_scale = 10.0
-            try:
-                bpy.data.objects[leafDupliObj].parent = leafObj
-            except KeyError:
-                pass
-        elif leafShape == 'dVert':
-            leafObj.instance_type = "VERTS"
-            leafObj.use_instance_vertices_rotation = True
-            try:
-                bpy.data.objects[leafDupliObj].parent = leafObj
-            except KeyError:
-                pass
-
-        #add leaf UVs
-        if leafShape == 'rect':
-            leafMesh.uv_layers.new(name="leafUV")
-            uvlayer = leafMesh.uv_layers.active.data
-
-            u1 = .5 * (1 - leafScaleX)
-            u2 = 1 - u1
-
-            for i in range(0, len(leafFaces)):
-                uvlayer[i*4 + 0].uv = Vector((u2, 0))
-                uvlayer[i*4 + 1].uv = Vector((u2, 1))
-                uvlayer[i*4 + 2].uv = Vector((u1, 1))
-                uvlayer[i*4 + 3].uv = Vector((u1, 0))
-
-        elif leafShape == 'hex':
-            leafMesh.uv_layers.new(name="leafUV")
-            uvlayer = leafMesh.uv_layers.active.data
-
-            u1 = .5 * (1 - leafScaleX)
-            u2 = 1 - u1
-
-            for i in range(0, int(len(leafFaces) / 2)):
-                uvlayer[i*8 + 0].uv = Vector((.5, 0))
-                uvlayer[i*8 + 1].uv = Vector((u1, 1/3))
-                uvlayer[i*8 + 2].uv = Vector((u1, 2/3))
-                uvlayer[i*8 + 3].uv = Vector((.5, 1))
-
-                uvlayer[i*8 + 4].uv = Vector((.5, 0))
-                uvlayer[i*8 + 5].uv = Vector((.5, 1))
-                uvlayer[i*8 + 6].uv = Vector((u2, 2/3))
-                uvlayer[i*8 + 7].uv = Vector((u2, 1/3))
-
-        leafMesh.validate()
-
-    leafVertSize = {'hex': 6, 'rect': 4, 'dFace': 4, 'dVert': 1}[leafShape]
-
-    armLevels = min(armLevels, tree_settings.levels)
-    armLevels -= 1
+    armature_settings.armLevels = min(armature_settings.armLevels, tree_settings.levels)
+    armature_settings.armLevels -= 1
 
     # unpack vars from splineToBone
     splineToBone1 = splineToBone
@@ -359,23 +91,22 @@ def add_tree(props):
 
     # add mesh object
     treeObj = None
-    if makeMesh:
+    if armature_settings.makeMesh:
         treeMesh = bpy.data.meshes.new('treemesh')
         treeObj = bpy.data.objects.new('treemesh', treeMesh)
         bpy.context.scene.collection.objects.link(treeObj)
-        if not useArm:
+        if not armature_settings.useArm:
             treeObj.location=bpy.context.scene.cursor.location
 
     # If we need an armature we add it
-    if useArm:
+    if armature_settings.useArm:
         # Create the armature and objects
-        armOb = create_armature(armAnim, leafP, cu, frameRate, leafMesh, leafObj, leafVertSize, leaves, levelCount, splineToBone,
-                                treeOb, treeObj, wind, gust, gustF, af1, af2, af3, leafAnim, loopFrames, previewArm, armLevels, makeMesh, boneStep)
+        armOb = create_armature(armature_settings, leafP, cu, leafMesh, leafObj, leaf_settings.leafVertSize, leaf_settings.leaves, levelCount, splineToBone, treeOb, treeObj)
 
     #print(time.time()-startTime)
 
     #mesh branches
-    if makeMesh:
+    if armature_settings.makeMesh:
         t1 = time.time()
 
         treeVerts = []
@@ -402,7 +133,7 @@ def add_tree(props):
                     break
             level = min(level, 3)
 
-            step = boneStep[level]
+            step = armature_settings.boneStep[level]
             vindex = len(treeVerts)
 
             p1 = points[0]
@@ -413,7 +144,7 @@ def add_tree(props):
                 pn = splitPidx[i] #int(splineToBone[i][-3:])
                 p_1 = cu.splines[pb].bezier_points[pn]
                 p_2 = cu.splines[pb].bezier_points[pn+1]
-                p = evalBez(p_1.co, p_1.handle_right, p_2.handle_left, p_2.co, 1 - 1/(resU + 1))
+                p = evalBez(p_1.co, p_1.handle_right, p_2.handle_left, p_2.co, 1 - 1/(tree_settings.resU + 1))
                 treeVerts.append(p)
 
                 root_vert.append(False)
@@ -431,7 +162,7 @@ def add_tree(props):
                 vert_radius.append((p1.radius, p1.radius))
 
             #dont make vertex group if above armLevels
-            if (i >= levelCount[armLevels]):
+            if (i >= levelCount[armature_settings.armLevels]):
                 idx = i
                 groupName = splineToBone[idx]
                 g = True
@@ -458,8 +189,8 @@ def add_tree(props):
                         vertexGroups[splineToBone[i]].append(vindex - 1)
                     levelGroups[level].append(vindex - 1)
 
-                for f in range(1, resU+1):
-                    pos = f / resU
+                for f in range(1, tree_settings.resU+1):
+                    pos = f / tree_settings.resU
                     p = evalBez(p1.co, p1.handle_right, p2.handle_left, p2.co, pos)
                     radius = p1.radius + (p2.radius - p1.radius) * pos
 
@@ -468,16 +199,16 @@ def add_tree(props):
                     vert_radius.append((radius, radius))
 
                     if (isend[i]) and (n == 0) and (f == 1):
-                        edge = [parent, n * resU + f + vindex]
+                        edge = [parent, n * tree_settings.resU + f + vindex]
                     else:
-                        edge = [n * resU + f + vindex - 1, n * resU + f + vindex]
+                        edge = [n * tree_settings.resU + f + vindex - 1, n * tree_settings.resU + f + vindex]
                         #add vert to group
-                        vertexGroups[groupName].append(n * resU + f + vindex - 1)
-                        levelGroups[level].append(n * resU + f + vindex - 1)
+                        vertexGroups[groupName].append(n * tree_settings.resU + f + vindex - 1)
+                        levelGroups[level].append(n * tree_settings.resU + f + vindex - 1)
                     treeEdges.append(edge)
 
-                vertexGroups[groupName].append(n * resU + resU + vindex)
-                levelGroups[level].append(n * resU + resU + vindex)
+                vertexGroups[groupName].append(n * tree_settings.resU + tree_settings.resU + vindex)
+                levelGroups[level].append(n * tree_settings.resU + tree_settings.resU + vindex)
 
                 p1 = p2
 
@@ -485,7 +216,7 @@ def add_tree(props):
 
         treeMesh.from_pydata(treeVerts, treeEdges, ())
 
-        if useArm:
+        if armature_settings.useArm:
             for group in vertexGroups:
                 treeObj.vertex_groups.new(name=group)
                 treeObj.vertex_groups[group].add(vertexGroups[group], 1.0, 'ADD')
@@ -494,9 +225,9 @@ def add_tree(props):
             treeObj.vertex_groups["Branching Level " + str(i)].add(g, 1.0, 'ADD')
 
         #add armature
-        if useArm:
+        if armature_settings.useArm:
             armMod = treeObj.modifiers.new('windSway', 'ARMATURE')
-            if previewArm:
+            if armature_settings.previewArm:
                 armOb.hide_viewport = True
                 armOb.data.display_type = 'STICK'
             armMod.object = armOb
@@ -506,7 +237,7 @@ def add_tree(props):
         #add skin modifier and set data
         skinMod = treeObj.modifiers.new('Skin', 'SKIN')
         skinMod.use_smooth_shade = True
-        if previewArm:
+        if armature_settings.previewArm:
             skinMod.show_viewport = False
         skindata = treeObj.data.skin_vertices[0].data
         for i, radius in enumerate(vert_radius):
@@ -514,3 +245,179 @@ def add_tree(props):
             skindata[i].use_root = root_vert[i]
 
         print("mesh time", time.time() - t1)
+
+
+def grow_all_splines(baseSize, baseSize_s, boneStep, cu, leafBaseSize, leaf_settings, scaleVal, tree_settings):
+    global splitError
+    childP = []
+    stemList = []
+    levelCount = []
+    splineToBone = deque([''])
+    addsplinetobone = splineToBone.append
+    # Each of the levels needed by the user we grow all the splines
+    for n in range(tree_settings.levels):
+        storeN = n
+        stemList = deque()
+        addstem = stemList.append
+        # If n is used as an index to access parameters for the tree it must be at most 3 or it will reference outside the array index
+        n = min(3, n)
+        splitError = 0.0
+
+        # closeTip only on last level
+        closeTipp = all([(n == tree_settings.levels - 1), tree_settings.closeTip])
+
+        # If this is the first level of growth (the trunk) then we need some special work to begin the tree
+        if n == 0:
+            kickstart_trunk(tree_settings, addstem, leaf_settings.leaves, cu, scaleVal)
+        # If this isn't the trunk then we may have multiple stem to initialize
+        else:
+            # For each of the points defined in the list of stem starting points we need to grow a stem.
+            fabricate_stems(tree_settings, addsplinetobone, addstem, baseSize, childP, cu, leaf_settings.leafDist, leaf_settings.leaves, leaf_settings.leafType, n, scaleVal, storeN, boneStep)
+
+        # change base size for each level
+        if n > 0:
+            baseSize *= baseSize_s  # decrease at each level
+        if (n == tree_settings.levels - 1):
+            baseSize = leafBaseSize
+
+        childP = []
+        # Now grow each of the stems in the list of those to be extended
+        for st in stemList:
+            # Now do the iterative pruning, this uses a binary search and halts once the difference between upper and lower bounds of the search are less than 0.005
+            ratio, splineToBone = perform_pruning(tree_settings, baseSize, childP, cu, n, scaleVal, splineToBone, st, closeTipp, boneStep, leaf_settings.leaves, leaf_settings.leafType)
+
+        levelCount.append(len(cu.splines))
+    return childP, levelCount, splineToBone
+
+
+def add_leafs(childP, leafObj, leaf_settings, treeOb):
+    leafVerts = []
+    leafFaces = []
+    leafNormals = []
+    leafMesh = None  # in case we aren't creating leaves, we'll still have the variable
+    leafP = []
+    if leaf_settings.leaves:
+        oldRot = 0.0
+        #n = min(3, n + 1)
+        # For each of the child points we add leaves
+        for ln, cp in enumerate(childP):
+            # If the special flag is set then we need to add several leaves at the same location
+            if leaf_settings.leafType == '4':
+                oldRot = -leaf_settings.leafRotate / 2
+                for g in range(abs(leaf_settings.leaves)):
+                    (vertTemp, faceTemp, normal, oldRot) = gen_leaf_mesh(leaf_settings, cp.co, cp.quat, cp.offset,
+                                                                         len(leafVerts), oldRot, ln)
+                    leafVerts.extend(vertTemp)
+                    leafFaces.extend(faceTemp)
+                    leafNormals.extend(normal)
+                    leafP.append(cp)
+            # Otherwise just add the leaves like splines.
+            else:
+                (vertTemp, faceTemp, normal, oldRot) = gen_leaf_mesh(leaf_settings, cp.co, cp.quat, cp.offset,
+                                                                     len(leafVerts), oldRot, ln)
+                leafVerts.extend(vertTemp)
+                leafFaces.extend(faceTemp)
+                leafNormals.extend(normal)
+                leafP.append(cp)
+
+        # Create the leaf mesh and object, add geometry using from_pydata, edges are currently added by validating the mesh which isn't great
+        leafMesh = bpy.data.meshes.new('leaves')
+        leafObj = bpy.data.objects.new('leaves', leafMesh)
+        bpy.context.scene.collection.objects.link(leafObj)
+        leafObj.parent = treeOb
+        leafMesh.from_pydata(leafVerts, (), leafFaces)
+
+        # set vertex normals for dupliVerts
+        if leaf_settings.leafShape == 'dVert':
+            leafMesh.vertices.foreach_set('normal', leafNormals)
+
+        # enable duplication
+        if leaf_settings.leafShape == 'dFace':
+            leafObj.instance_type = "FACES"
+            leafObj.use_instance_faces_scale = True
+            leafObj.instance_faces_scale = 10.0
+            try:
+                bpy.data.objects[leaf_settings.leafDupliObj].parent = leafObj
+            except KeyError:
+                pass
+        elif leaf_settings.leafShape == 'dVert':
+            leafObj.instance_type = "VERTS"
+            leafObj.use_instance_vertices_rotation = True
+            try:
+                bpy.data.objects[leaf_settings.leafDupliObj].parent = leafObj
+            except KeyError:
+                pass
+
+        # add leaf UVs
+        if leaf_settings.leafShape == 'rect':
+            leafMesh.uv_layers.new(name="leafUV")
+            uvlayer = leafMesh.uv_layers.active.data
+
+            u1 = .5 * (1 - leaf_settings.leafScaleX)
+            u2 = 1 - u1
+
+            for i in range(0, len(leafFaces)):
+                uvlayer[i * 4 + 0].uv = Vector((u2, 0))
+                uvlayer[i * 4 + 1].uv = Vector((u2, 1))
+                uvlayer[i * 4 + 2].uv = Vector((u1, 1))
+                uvlayer[i * 4 + 3].uv = Vector((u1, 0))
+
+        elif leaf_settings.leafShape == 'hex':
+            leafMesh.uv_layers.new(name="leafUV")
+            uvlayer = leafMesh.uv_layers.active.data
+
+            u1 = .5 * (1 - leaf_settings.leafScaleX)
+            u2 = 1 - u1
+
+            for i in range(0, int(len(leafFaces) / 2)):
+                uvlayer[i * 8 + 0].uv = Vector((.5, 0))
+                uvlayer[i * 8 + 1].uv = Vector((u1, 1 / 3))
+                uvlayer[i * 8 + 2].uv = Vector((u1, 2 / 3))
+                uvlayer[i * 8 + 3].uv = Vector((.5, 1))
+
+                uvlayer[i * 8 + 4].uv = Vector((.5, 0))
+                uvlayer[i * 8 + 5].uv = Vector((.5, 1))
+                uvlayer[i * 8 + 6].uv = Vector((u2, 2 / 3))
+                uvlayer[i * 8 + 7].uv = Vector((u2, 1 / 3))
+
+        leafMesh.validate()
+    return leafMesh, leafObj, leafP
+
+
+def create_pruning_envelope(pruneBase, scaleVal, treeOb, tree_settings):
+    enHandle = 'VECTOR'
+    enNum = 128
+    enCu = bpy.data.curves.new('envelope', 'CURVE')
+    enOb = bpy.data.objects.new('envelope', enCu)
+    enOb.parent = treeOb
+    bpy.context.scene.collection.objects.link(enOb)
+    newSpline = enCu.splines.new('BEZIER')
+    newPoint = newSpline.bezier_points[-1]
+    newPoint.co = Vector((0, 0, scaleVal))
+    (newPoint.handle_right_type, newPoint.handle_left_type) = (enHandle, enHandle)
+    # Set the coordinates by varying the z value, envelope will be aligned to the x-axis
+    for c in range(enNum):
+        newSpline.bezier_points.add(1)
+        newPoint = newSpline.bezier_points[-1]
+        ratioVal = (c + 1) / (enNum)
+        zVal = scaleVal - scaleVal * (1 - pruneBase) * ratioVal
+        newPoint.co = Vector((scaleVal * tree_settings.pruneWidth * shape_ratio(9, ratioVal,
+                                                                                tree_settings.pruneWidthPeak,
+                                                                                tree_settings.prunePowerHigh,
+                                                                                tree_settings.prunePowerLow), 0, zVal))
+        (newPoint.handle_right_type, newPoint.handle_left_type) = (enHandle, enHandle)
+    newSpline = enCu.splines.new('BEZIER')
+    newPoint = newSpline.bezier_points[-1]
+    newPoint.co = Vector((0, 0, scaleVal))
+    (newPoint.handle_right_type, newPoint.handle_left_type) = (enHandle, enHandle)
+    # Create a second envelope but this time on the y-axis
+    for c in range(enNum):
+        newSpline.bezier_points.add(1)
+        newPoint = newSpline.bezier_points[-1]
+        ratioVal = (c + 1) / (enNum)
+        zVal = scaleVal - scaleVal * (1 - pruneBase) * ratioVal
+        newPoint.co = Vector((0, scaleVal * tree_settings.pruneWidth * shape_ratio(9, ratioVal,
+                                                                                   tree_settings.pruneWidthPeak,
+                                                                                   tree_settings.prunePowerHigh,
+                                                                                   tree_settings.prunePowerLow), zVal))
+        (newPoint.handle_right_type, newPoint.handle_left_type) = (enHandle, enHandle)

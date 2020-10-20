@@ -10,8 +10,9 @@ from .interp_stem import interp_stem
 from .TreeSettings import TreeSettings
 
 
-def perform_pruning(tree_settings: TreeSettings, baseSize, baseSplits, childP, cu, n, scaleVal,
-                    splineToBone, st, closeTip, noTip, boneStep, leaves, leafType):
+def perform_pruning(tree_settings: TreeSettings, baseSize, childP, cu, n, scaleVal,
+                    splineToBone, st, closeTip, boneStep, leaves, leafType):
+    # When using pruning, we need to ensure that the random effects will be the same for each iteration to make sure the problem is linear.
     randState = getstate()
     startPrune = True
     lengthTest = 0.0
@@ -101,7 +102,7 @@ def perform_pruning(tree_settings: TreeSettings, baseSize, baseSplits, childP, c
                 if k == 0:
                     numSplit = 0
                 elif (k == 1) and (n == 0):
-                    numSplit = baseSplits
+                    numSplit = tree_settings.baseSplits
                 elif (n == 0) and (k == int((tree_settings.curveRes[n]) * tree_settings.splitHeight)) and (splitVal > 0): #always split at splitHeight
                     numSplit = 1
                 elif (n == 0) and (k < ((tree_settings.curveRes[n]) * tree_settings.splitHeight)) and (k != 1): #splitHeight
@@ -120,8 +121,7 @@ def perform_pruning(tree_settings: TreeSettings, baseSize, baseSplits, childP, c
                 if (k == int(tree_settings.curveRes[n] / 2 + 0.5)) and (tree_settings.curveBack[n] != 0):
                     spl.curv += 2 * (tree_settings.curveBack[n] / tree_settings.curveRes[n]) #was -4 *
 
-                grow_spline(n, spl, numSplit, tree_settings.splitAngle[n], tree_settings.splitAngleV[n], tree_settings.splitStraight, splineList, tree_settings.handles, splineToBone,
-                            closeTip, tree_settings.splitRadiusRatio, tree_settings.minRadius, kp, tree_settings.splitHeight, tree_settings.attractOut[n], stemsegL, tree_settings.splitLength, tree_settings.lengthV[n], tree_settings.taperCrown, boneStep, tree_settings.rotate, tree_settings.rotateV, tree_settings.matIndex)
+                grow_spline(tree_settings, n, spl, numSplit, splineList, splineToBone, closeTip, kp, stemsegL, boneStep)
 
         # If pruning is enabled then we must to the check to see if the end of the spline is within the evelope
         if tree_settings.prune:
@@ -174,7 +174,7 @@ def perform_pruning(tree_settings: TreeSettings, baseSize, baseSplits, childP, c
             if (n != tree_settings.levels - 1) and (tree_settings.branches[min(3, n+1)] == 0):
                 tVals = []
 
-            if (n < tree_settings.levels - 1) and noTip:
+            if (n < tree_settings.levels - 1) and tree_settings.noTip:
                 tVals = tVals[:-1]
 
             # remove some of the points because of baseSize
@@ -187,7 +187,7 @@ def perform_pruning(tree_settings: TreeSettings, baseSize, baseSplits, childP, c
             #grow branches in rings/whorls
             if (n == 0) and (tree_settings.nrings > 0):
                 tVals = [(floor(t * tree_settings.nrings) / tree_settings.nrings) * uniform(.995, 1.005) for t in tVals[:-1]]
-                if not noTip:
+                if not tree_settings.noTip:
                     tVals.append(1)
                 tVals = [t for t in tVals if t > baseSize]
 
