@@ -18,13 +18,13 @@ def grow_branch_level(tree_settings: TreeSettings, base_size, child_points: List
         # Make a copy of the current list to avoid continually adding to the list we're iterating over
         temp_list = spline_list[:]
 
-        #for curve variation
+        # for curve variation
         if tree_settings.curveRes[lvl] > 1:
             kp = (k / (tree_settings.curveRes[lvl] - 1)) # * 2
         else:
             kp = 1.0
 
-        #split bias
+        # split bias
         split_value = tree_settings.segSplits[lvl]
         if lvl == 0:
             split_value = ((2 * tree_settings.splitBias) * (kp - .5) + 1) * split_value
@@ -32,38 +32,7 @@ def grow_branch_level(tree_settings: TreeSettings, base_size, child_points: List
 
         # For each of the splines in this list set the number of splits and then grow it
         for spl in temp_list:
-
-            #adjust num_split #this is not perfect, but it's good enough and not worth improving
-            last_split = getattr(spl, 'splitlast', 0)
-            split_val = split_value
-            if last_split == 0:
-                split_val = split_value ** 0.5 # * 1.33
-            elif last_split == 1:
-                split_val = split_value * split_value
-
-            if k == 0:
-                num_split = 0
-            elif (k == 1) and (lvl == 0):
-                num_split = tree_settings.baseSplits
-            elif (lvl == 0) and (k == int((tree_settings.curveRes[lvl]) * tree_settings.splitHeight)) and (split_val > 0): #always split at splitHeight
-                num_split = 1
-            elif (lvl == 0) and (k < ((tree_settings.curveRes[lvl]) * tree_settings.splitHeight)) and (k != 1): #splitHeight
-                num_split = 0
-            else:
-                if (lvl >= 0) and tree_settings.splitByLen:
-                    L = ((spl.segL * tree_settings.curveRes[lvl]) / scale_val)
-                    lf = 1
-                    for l in tree_settings.length[:lvl + 1]:
-                        lf *= l
-                    L = L / lf
-                    num_split = splits2(split_val * L)
-                else:
-                    num_split = splits2(split_val)
-
-            if (k == int(tree_settings.curveRes[lvl] / 2 + 0.5)) and (tree_settings.curveBack[lvl] != 0):
-                spl.curv += 2 * (tree_settings.curveBack[lvl] / tree_settings.curveRes[lvl]) #was -4 *
-
-            grow_spline(tree_settings, lvl, spl, num_split, spline_list, spline_to_bone, close_tip, kp, bone_step)
+            split_and_grow_splines(bone_step, close_tip, k, kp, lvl, scale_val, spl, spline_list, spline_to_bone, split_value, tree_settings)
 
     # Sprout child points to grow the next splines or leaves
     if (lvl == 0) and (tree_settings.rMode == 'rotate'):
@@ -71,13 +40,13 @@ def grow_branch_level(tree_settings: TreeSettings, base_size, child_points: List
     elif (lvl == 0) and (tree_settings.rMode == 'distance'):
         t_values = find_child_points3(spline_list, stem.children, rp=.25) #degrees(rotateV[3])
 
-    elif ((lvl > 0) and (lvl != tree_settings.levels - 1) and (attachment == "1")) or ((lvl == tree_settings.levels - 1) and (leaf_type in ['1', '3'])): # oppositely attached leaves and branches
+    elif ((lvl > 0) and (lvl != tree_settings.levels - 1) and (attachment == "1")) or ((lvl == tree_settings.levels - 1) and (leaf_type in ['1', '3'])):  # oppositely attached leaves and branches
         t_val = find_child_points(spline_list, ceil(stem.children / 2))
         t_values = []
         for t in t_val[:-1]:
             t_values.extend([t, t])
         if (lvl == tree_settings.levels - 1) and ((leaves / 2) == (leaves // 2)):
-            # put two leaves at branch tip if leaves is even
+            # Put two leaves at branch tip if leaves is even
             t_values.extend([1, 1])
         else:
             t_values.append(1)
@@ -122,3 +91,36 @@ def grow_branch_level(tree_settings: TreeSettings, base_size, child_points: List
         child_points.extend(interp_stem(s, t_values, max_offset, base_size))
 
     return spline_to_bone
+
+
+def split_and_grow_splines(bone_step, close_tip, k, kp, lvl, scale_val, spl, spline_list, spline_to_bone, split_value,
+                           tree_settings):
+    # Adjust num_split #this is not perfect, but it's good enough and not worth improving
+    last_split = getattr(spl, 'splitlast', 0)
+    split_val = split_value
+    if last_split == 0:
+        split_val = split_value ** 0.5  # * 1.33
+    elif last_split == 1:
+        split_val = split_value * split_value
+    if k == 0:
+        num_split = 0
+    elif (k == 1) and (lvl == 0):
+        num_split = tree_settings.baseSplits
+    elif (lvl == 0) and (k == int((tree_settings.curveRes[lvl]) * tree_settings.splitHeight)) and (
+            split_val > 0):  # always split at splitHeight
+        num_split = 1
+    elif (lvl == 0) and (k < ((tree_settings.curveRes[lvl]) * tree_settings.splitHeight)) and (k != 1):  # splitHeight
+        num_split = 0
+    else:
+        if (lvl >= 0) and tree_settings.splitByLen:
+            L = ((spl.segL * tree_settings.curveRes[lvl]) / scale_val)
+            lf = 1
+            for l in tree_settings.length[:lvl + 1]:
+                lf *= l
+            L = L / lf
+            num_split = splits2(split_val * L)
+        else:
+            num_split = splits2(split_val)
+    if (k == int(tree_settings.curveRes[lvl] / 2 + 0.5)) and (tree_settings.curveBack[lvl] != 0):
+        spl.curv += 2 * (tree_settings.curveBack[lvl] / tree_settings.curveRes[lvl])  # was -4 *
+    grow_spline(tree_settings, lvl, spl, num_split, spline_list, spline_to_bone, close_tip, kp, bone_step)
