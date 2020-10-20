@@ -1,4 +1,4 @@
-from sapling_4.utils import to_rad
+from ..utils import to_rad
 
 
 class TreeSettings:
