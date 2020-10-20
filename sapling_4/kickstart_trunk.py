@@ -8,35 +8,33 @@ from .StemSpline import StemSpline
 from .TreeSettings import TreeSettings
 
 
-def kickstart_trunk(tree_settings: TreeSettings, addstem, leaves, cu, scaleVal):
-    newSpline = cu.splines.new('BEZIER')
-    newSpline.material_index = tree_settings.matIndex[0]
-    newPoint = newSpline.bezier_points[-1]
-    newPoint.co = Vector((0, 0, 0))
+def kickstart_trunk(tree_settings: TreeSettings, add_stem, leaves, cu, scale_val):
+    new_spline = cu.splines.new('BEZIER')
+    new_spline.material_index = tree_settings.matIndex[0]
+    new_point = new_spline.bezier_points[-1]
+    new_point.co = Vector((0, 0, 0))
 
-    #start trunk rotation with downAngle
-    tempPos = zAxis.copy()
-    downAng = tree_settings.downAngle[0] - .5 * pi
-    downAng = downAng# + uniform(-downAngleV[0], downAngleV[0])
-    downRot = Matrix.Rotation(downAng, 3, 'X')
-    tempPos.rotate(downRot)
-    downRot = Matrix.Rotation(tree_settings.downAngleV[0], 3, 'Y')
-    tempPos.rotate(downRot)
-    handle = tempPos
-    newPoint.handle_right = handle
-    newPoint.handle_left = -handle
+    # Start trunk rotation with down_angle
+    temp_pos = zAxis.copy()
+    down_ang = tree_settings.downAngle[0] - .5 * pi
+    down_ang = down_ang  # + uniform(-downAngleV[0], downAngleV[0])
+    down_rot = Matrix.Rotation(down_ang, 3, 'X')
+    temp_pos.rotate(down_rot)
+    down_rot = Matrix.Rotation(tree_settings.downAngleV[0], 3, 'Y')
+    temp_pos.rotate(down_rot)
+    handle = temp_pos
+    new_point.handle_right = handle
+    new_point.handle_left = -handle
 
-    branchL = scaleVal * tree_settings.length[0]
-    curveVal = tree_settings.curve[0] / tree_settings.curveRes[0]
+    branch_l = scale_val * tree_settings.length[0]
+    curve_val = tree_settings.curve[0] / tree_settings.curveRes[0]
     if tree_settings.levels == 1:
-        childStems = leaves
+        child_stems = leaves
     else:
-        childStems = tree_settings.branches[1]
-    startRad = scaleVal * tree_settings.ratio * tree_settings.scale0 * uniform(1-tree_settings.scaleV0, 1+tree_settings.scaleV0)
-    endRad = (startRad * (1 - tree_settings.taper[0])) ** tree_settings.ratioPower
-    startRad = max(startRad, tree_settings.minRadius)
-    endRad = max(endRad, tree_settings.minRadius)
-    newPoint.radius = startRad * tree_settings.rootFlare
-    addstem(
-        StemSpline(newSpline, curveVal, tree_settings.curveV[0], tree_settings.attractUp[0], 0, tree_settings.curveRes[0], branchL / tree_settings.curveRes[0],
-                   childStems, startRad, endRad, 0, 0, None))
+        child_stems = tree_settings.branches[1]
+    start_rad = scale_val * tree_settings.ratio * tree_settings.scale0 * uniform(1 - tree_settings.scaleV0, 1 + tree_settings.scaleV0)
+    end_rad = (start_rad * (1 - tree_settings.taper[0])) ** tree_settings.ratioPower
+    start_rad = max(start_rad, tree_settings.minRadius)
+    end_rad = max(end_rad, tree_settings.minRadius)
+    new_point.radius = start_rad * tree_settings.rootFlare
+    add_stem(StemSpline(new_spline, curve_val, tree_settings.curveV[0], tree_settings.attractUp[0], 0, tree_settings.curveRes[0], branch_l / tree_settings.curveRes[0], child_stems, start_rad, end_rad, 0, 0, None))
