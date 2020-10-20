@@ -16,10 +16,10 @@ def interp_stem(stem, t_vals, max_offset, base_size):
     temp_list = deque()
     for t in t_vals:
         if (t >= check_bottom) and (t <= check_top) and (t < 1.0):
-            scaledT = (t - check_bottom) / (check_top - check_bottom)
-            ofst = ((t - base_size) / (check_top - base_size)) * (1 - base_size) + base_size
+            scaled_t = (t - check_bottom) / (check_top - check_bottom)
+            offstet = ((t - base_size) / (check_top - base_size)) * (1 - base_size) + base_size
 
-            length = num_segments * scaledT
+            length = num_segments * scaled_t
             index = int(length)
             t_temp = length - index
 
@@ -27,7 +27,7 @@ def interp_stem(stem, t_vals, max_offset, base_size):
             quat = (eval_bez_tan(points[index].co, points[index].handle_right, points[index + 1].handle_left, points[index + 1].co, t_temp)).to_track_quat('Z', 'Y')
             radius = (1-t_temp)*points[index].radius + t_temp*points[index+1].radius # radius at the child point
 
-            temp_list.append(ChildPoint(coord, quat, (stem.radS, radius, stem.radE), t, ofst, stem.segMax * stem.segL, 'bone' + (str(stem.splN).rjust(3, '0')) + '.' + (str(index).rjust(3, '0'))))
+            temp_list.append(ChildPoint(coord, quat, (stem.radS, radius, stem.radE), t, offstet, stem.segMax * stem.segL, 'bone' + (str(stem.splN).rjust(3, '0')) + '.' + (str(index).rjust(3, '0'))))
         elif t == 1:
             #add stems at tip
             index = num_segments-1
