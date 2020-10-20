@@ -5,7 +5,7 @@ from mathutils import Vector, Matrix
 
 from .utils import z_axis
 from .StemSpline import StemSpline
-from .TreeSettings import TreeSettings
+from .ui_settings.TreeSettings import TreeSettings
 
 
 def kickstart_trunk(tree_settings: TreeSettings, add_stem, leaves, tree_curve, scale_val):

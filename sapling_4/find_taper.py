@@ -1,5 +1,5 @@
 from .shape_ratio import shape_ratio
-from .TreeSettings import TreeSettings
+from .ui_settings.TreeSettings import TreeSettings
 
 
 # calculate taper automatically

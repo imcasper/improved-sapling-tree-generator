@@ -4,7 +4,7 @@ from typing import List
 
 from .gen_leaf_mesh import gen_leaf_mesh
 from .ChildPoint import ChildPoint
-from .LeafSettings import LeafSettings
+from .ui_settings.LeafSettings import LeafSettings
 
 
 def add_leafs(child_points: List[ChildPoint], leaf_settings: LeafSettings, tree_ob):

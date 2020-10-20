@@ -7,7 +7,7 @@ from mathutils import Vector, Matrix
 from .utils import tau, z_axis, convert_quat, round_bone
 from .StemSpline import StemSpline
 from .shape_ratio import shape_ratio
-from .TreeSettings import TreeSettings
+from .ui_settings.TreeSettings import TreeSettings
 
 
 def fabricate_stems(tree_settings: TreeSettings, addsplinetobone, addstem, baseSize, childP, cu,

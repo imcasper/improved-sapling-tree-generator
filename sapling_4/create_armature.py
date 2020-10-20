@@ -6,7 +6,7 @@ import bpy
 from mathutils import Vector
 
 from .utils import tau, round_bone
-from .ArmatureSettings import ArmatureSettings
+from .ui_settings.ArmatureSettings import ArmatureSettings
 
 
 def create_armature(armature_settings: ArmatureSettings, leaf_points, tree_curve, leaf_mesh, leaf_mesh_object, leaf_vert_size, leaves, level_count, spline_to_bone, tree_curve_object, tree_mesh_object):

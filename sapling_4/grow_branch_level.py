@@ -2,12 +2,12 @@ from math import ceil, floor
 from random import uniform
 from typing import List
 
-from .utils import splits, splits2, splits3
+from .utils import splits2
 from .grow_spline import grow_spline
 from .interp_stem import interp_stem
 from .find_child_points import find_child_points, find_child_points2, find_child_points3
 from .ChildPoint import ChildPoint
-from .TreeSettings import TreeSettings
+from .ui_settings.TreeSettings import TreeSettings
 
 
 def grow_branch_level(tree_settings: TreeSettings, base_size, child_points: List[ChildPoint], lvl, scale_val, spline_to_bone, stem, close_tip, bone_step, leaves, leaf_type, attachment):

@@ -3,9 +3,9 @@ from random import seed, uniform
 
 import bpy
 
-from .ArmatureSettings import ArmatureSettings
-from .LeafSettings import LeafSettings
-from .TreeSettings import TreeSettings
+from .ui_settings.ArmatureSettings import ArmatureSettings
+from .ui_settings.LeafSettings import LeafSettings
+from .ui_settings.TreeSettings import TreeSettings
 from .add_leafs import add_leafs
 from .grow_all_splines import grow_all_splines
 from .make_armature_mesh import make_armature_mesh
@@ -15,17 +15,17 @@ from .find_taper import find_taper
 
 def add_tree(props):
     global splitError
-    #startTime = time.time()
+    # startTime = time.time()
     # Set the seed for repeatable results
-    rseed = props.seed
-    seed(rseed)
+    random_seed = props.seed
+    seed(random_seed)
 
     # Set all other variables
     tree_settings = TreeSettings(props)
     leaf_settings = LeafSettings(props)
     armature_settings = ArmatureSettings(props)
     scale_v = props.scaleV#
-    baseSize = props.baseSize
+    base_size = props.baseSize
 
     attachment = props.attachment
 
@@ -54,13 +54,13 @@ def add_tree(props):
         tree_curve_object.data.materials.append(None)
 
     # Fix the scale of the tree now
-    if rseed == 0: #first tree is always average size
+    if random_seed == 0: #first tree is always average size
         scale_v = 0
     scale_val = tree_settings.scale + uniform(-scale_v, scale_v)
     scale_val += copysign(1e-6, scale_val)  # Move away from zero to avoid div by zero
 
     # Each of the levels needed by the user we grow all the splines
-    child_points, level_count, spline_to_bone = grow_all_splines(tree_settings, armature_settings, leaf_settings, attachment, baseSize, tree_curve, scale_val)
+    child_points, level_count, spline_to_bone = grow_all_splines(tree_settings, armature_settings, leaf_settings, attachment, base_size, tree_curve, scale_val)
 
     # Set curve resolution
     tree_curve.resolution_u = tree_settings.resU

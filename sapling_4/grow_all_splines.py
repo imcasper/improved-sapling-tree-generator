@@ -3,9 +3,9 @@ from collections import deque
 from .fabricate_stems import fabricate_stems
 from .grow_branch_level import grow_branch_level
 from .kickstart_trunk import kickstart_trunk
-from .ArmatureSettings import ArmatureSettings
-from .LeafSettings import LeafSettings
-from .TreeSettings import TreeSettings
+from .ui_settings.ArmatureSettings import ArmatureSettings
+from .ui_settings.LeafSettings import LeafSettings
+from .ui_settings.TreeSettings import TreeSettings
 
 
 def grow_all_splines(tree_settings: TreeSettings, armature_settings: ArmatureSettings, leaf_settings: LeafSettings, attachment, base_size, tree_curve, scale_val):

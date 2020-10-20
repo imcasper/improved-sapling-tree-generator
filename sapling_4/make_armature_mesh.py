@@ -2,8 +2,8 @@ import time
 from collections import OrderedDict
 
 from .utils import eval_bez, round_bone
-from .TreeSettings import TreeSettings
-from .ArmatureSettings import ArmatureSettings
+from .ui_settings.TreeSettings import TreeSettings
+from .ui_settings.ArmatureSettings import ArmatureSettings
 
 
 def make_armature_mesh(armature_settings: ArmatureSettings, tree_settings: TreeSettings, armature_object, tree_curve, level_count, spline_to_bone, tree_mesh, tree_mesh_object):

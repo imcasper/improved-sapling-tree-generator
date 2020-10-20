@@ -6,7 +6,7 @@ from mathutils import Matrix, Euler
 
 from .utils import declination, angle_mean, convert_quat, z_axis, tau, x_axis, curve_up, round_bone
 from .StemSpline import StemSpline
-from .TreeSettings import TreeSettings
+from .ui_settings.TreeSettings import TreeSettings
 
 
 # This is the function which extends (or grows) a given stem.

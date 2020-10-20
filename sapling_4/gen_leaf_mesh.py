@@ -5,7 +5,7 @@ from typing import List
 from mathutils import Vector, Matrix, Euler
 
 from .utils import z_axis
-from .LeafSettings import LeafSettings
+from .ui_settings.LeafSettings import LeafSettings
 
 
 def gen_leaf_mesh(leaf_settings: LeafSettings, loc, quat, offset, index, old_rot, leaf_number):
