@@ -252,7 +252,7 @@ def new_adjusted_spline(angle, bone_step, branch_rot, branch_rot_mat, branch_str
 
     # Add the new point and adjust its coords, handles and radius
     new_spline.bezier_points.add(1)
-    new_point, new_radius = add_new_point(dir_vec + end_co, stem.seg + 1, handle_type, new_spline, split_r1, stem, tree_settings)
+    new_point, new_radius = add_new_point(dir_vec + end_co, handle_type, stem.seg + 1, new_spline, split_r1, stem, tree_settings)
     n_rad_s = max(stem.radS * split_r1, tree_settings.minRadius)
     n_rad_e = max(stem.radE * split_r1, tree_settings.minRadius)
 
@@ -274,9 +274,9 @@ def new_adjusted_spline(angle, bone_step, branch_rot, branch_rot_mat, branch_str
     return split_r2
 
 
-def add_new_point(ugg, handle_type, seg, new_spline, split_r1, stem, tree_settings):
+def add_new_point(new_coord, handle_type, seg, new_spline, split_r1, stem, tree_settings):
     new_point = new_spline.bezier_points[-1]
-    (new_point.co, new_point.handle_left_type, new_point.handle_right_type) = (ugg, handle_type, handle_type)
+    (new_point.co, new_point.handle_left_type, new_point.handle_right_type) = (new_coord, handle_type, handle_type)
     new_radius = (stem.radS * (1 - seg / stem.segMax) + stem.radE * (seg / stem.segMax)) * split_r1
     new_radius = max(new_radius, tree_settings.minRadius)
     return new_point, new_radius
