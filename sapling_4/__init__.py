@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#====================== BEGIN GPL LICENSE BLOCK ======================
+# ====================== BEGIN GPL LICENSE BLOCK ======================
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -17,8 +17,12 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 #
 # ======================= END GPL LICENSE BLOCK ========================
+import bpy
+# ======================= END GPL LICENSE BLOCK ========================
 
 import sapling_4
+from bpy.props import IntVectorProperty, FloatProperty, BoolProperty, EnumProperty, IntProperty, FloatVectorProperty, \
+    StringProperty
 import bpy.types
 
 import sapling_4.settings_lists
@@ -39,6 +43,17 @@ bl_info = {
     "location": "View3D > Add > Curve",
     "description": "Adds a parametric tree.",
     "category": "Add Curve"}
+##"Originally based on the method presented by Jason Weber & Joseph Penn in their paper 'Creation and Rendering of Realistic Trees'."##
+
+# if "bpy" in locals():
+#     import importlib
+#     importlib.reload(sapling_4)
+# else:
+#     import bpy
+#     import bpy.types
+
+#import cProfile
+
 
 # "Originally based on the method presented by Jason Weber & Joseph Penn in their paper 'Creation and Rendering of Realistic Trees'." #
 
