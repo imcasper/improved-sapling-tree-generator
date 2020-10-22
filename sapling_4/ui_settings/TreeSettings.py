@@ -1,4 +1,5 @@
 from ..utils import to_rad
+from ..settings_lists import settings
 
 
 class TreeSettings:

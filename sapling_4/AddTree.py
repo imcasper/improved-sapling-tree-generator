@@ -1,22 +1,24 @@
-import time
-from math import ceil
-import sapling_4
-from bpy.props import IntVectorProperty, FloatProperty, BoolProperty, EnumProperty, IntProperty, FloatVectorProperty, \
-    StringProperty
+import bpy
 import bpy.types
+import time
+from bpy.props import IntVectorProperty, FloatProperty, BoolProperty, EnumProperty, IntProperty, FloatVectorProperty, \
+    StringProperty, PointerProperty
+from math import ceil
 
+import sapling_4
 import sapling_4.settings_lists
 from .settings_lists import settings, axes, handleList, branchmodes, shapeList3, shapeList4, attachmenttypes, leaftypes
-
+from .TestSettings import TestSettings
 from .ExportData import ExportData
 from .ImportData import ImportData
 from .PresetMenu import PresetMenu
+from .AddMultiTree import AddMultipleTrees
 from .add_tree import add_tree
 from .get_preset_paths import get_preset_paths
 from .utils import splits, splits2, splits3, declination, curve_up, curve_down, eval_bez, eval_bez_tan, round_bone, \
     to_rad, angle_mean, convert_quat
-import bpy
 
+from .PropertyHolder import PropHolder, TPH
 
 useSet = False
 is_first = False
@@ -26,6 +28,7 @@ class AddTree(bpy.types.Operator):
     bl_idname = "curve.tree_add"
     bl_label = "Sapling: Add Tree"
     bl_options = {'REGISTER', 'UNDO'}
+
 
     def objectList(self, context):
         objects = []
@@ -37,6 +40,7 @@ class AddTree(bpy.types.Operator):
         return objects
 
     def update_tree(self, context):
+        print("uppd Tree")
         self.do_update = True
 
     def update_leaves(self, context):
@@ -47,6 +51,8 @@ class AddTree(bpy.types.Operator):
 
     def no_update_tree(self, context):
         self.do_update = False
+
+    # test_property_group: PointerProperty(type=TestSettings, update=update_tree)
 
     do_update: BoolProperty(name='Do Update',
         default=True, options={'HIDDEN'})
@@ -59,6 +65,7 @@ class AddTree(bpy.types.Operator):
     bevel: BoolProperty(name='Bevel',
         description='Whether the curve is beveled',
         default=False, update=update_tree)
+
     showLeaves: BoolProperty(name='Show Leaves',
         description='Whether the leaves are shown',
         default=False, update=update_tree)
@@ -701,6 +708,7 @@ class AddTree(bpy.types.Operator):
         start_time = time.time()
         # If we need to set the properties from a preset then do it here
         if useSet:
+            print("use sett")
             for a, b in settings.items():
                 setattr(self, a, b)
             if self.limitImport:
@@ -708,14 +716,15 @@ class AddTree(bpy.types.Operator):
                 setattr(self, 'showLeaves', False)
             useSet = False
         if self.do_update:
-            add_tree(self)
+            # add_tree(self)
             # cProfile.runctx("addTree(self)", globals(), locals())
-            print("Tree creation in %0.1fs" % (time.time() - start_time))
+            print("Tree creation in %0.1fs" %(time.time()-start_time))
 
-            # Backup most recent setengs in case of exit
+            # Backup most recent settings in case of exit
             if not is_first:
                 # Here we create a dict of all the properties.
                 data = self.create_property_dict()
+                print("_______DATA DICT_________\n", data)
 
                 # Then save
                 bpy.ops.sapling.exportdata("INVOKE_DEFAULT", data=repr([repr(data), "PreviousSettings", True]))

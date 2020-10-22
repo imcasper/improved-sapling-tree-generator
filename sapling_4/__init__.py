@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# ====================== BEGIN GPL LICENSE BLOCK ======================
+#====================== BEGIN GPL LICENSE BLOCK ======================
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -21,12 +21,15 @@
 import sapling_4
 import bpy.types
 
+import sapling_4.settings_lists
+from .settings_lists import settings, axes, handleList, branchmodes, shapeList3, shapeList4, attachmenttypes, leaftypes
+
 from .ExportData import ExportData
 from .ImportData import ImportData
 from .PresetMenu import PresetMenu
 from .AddTree import AddTree
-from .AddMultipleTrees import AddMultipleTrees
-
+from .AddMultiTree import AddMultipleTrees
+from .TestSettings import TestSettings
 
 bl_info = {
     "name": "Sapling_4",
@@ -39,12 +42,12 @@ bl_info = {
 
 # "Originally based on the method presented by Jason Weber & Joseph Penn in their paper 'Creation and Rendering of Realistic Trees'." #
 
-if "bpy" in locals():
-    import importlib
-    importlib.reload(sapling_4)
-else:
-    import bpy
-    import bpy.types
+# if "bpy" in locals():
+#     import importlib
+#     importlib.reload(sapling_4)
+# else:
+#     import bpy
+#     import bpy.types
 
 
 def menu_func(self, context):
@@ -56,6 +59,7 @@ def menu_func2(self, context):
 
 
 classes = (
+    # TestSettings,
     AddTree,
     AddMultipleTrees,
     PresetMenu,
@@ -68,8 +72,10 @@ def register():
     from bpy.utils import register_class
     for cls in classes:
         register_class(cls)
+    # bpy.types.Scene.test_sett = bpy.props.PointerProperty(type=TestSettings)
     bpy.types.VIEW3D_MT_curve_add.append(menu_func)
     bpy.types.VIEW3D_MT_curve_add.append(menu_func2)
+    # global settings
 
 
 def unregister():
@@ -78,7 +84,6 @@ def unregister():
         unregister_class(cls)
     bpy.types.VIEW3D_MT_curve_add.remove(menu_func2)
     bpy.types.VIEW3D_MT_curve_add.remove(menu_func)
-
 
 if __name__ == "__main__":
     register()
