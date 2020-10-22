@@ -44,7 +44,7 @@ axes = [("+0", "X", ""),
 
 handleList = [('0', 'Auto', 'Auto'),
               ('1', 'Vector', 'Vector')]
-
+global settings
 settings = [('0', 'Geometry', 'Geometry'),
             ('1', 'Branch Radius', 'Branch Radius'),
             ('2', 'Branch Splitting', 'Branch Splitting'),

@@ -5,6 +5,7 @@ import bpy
 from bpy.props import StringProperty
 
 from .get_preset_paths import get_preset_paths
+from .settings_lists import settings
 
 
 class ImportData(bpy.types.Operator):
