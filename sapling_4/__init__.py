@@ -20,7 +20,12 @@
 import time
 from math import ceil
 import sapling_4
-from bpy.props import FloatVectorProperty, IntVectorProperty, FloatProperty, BoolProperty, EnumProperty, IntProperty, StringProperty
+from bpy.props import IntVectorProperty, FloatProperty, BoolProperty, EnumProperty, IntProperty, FloatVectorProperty, \
+    StringProperty
+import bpy.types
+
+import sapling_4.settings_lists
+from .settings_lists import settings, axes, handleList, branchmodes, shapeList3, shapeList4, attachmenttypes, leaftypes
 
 from .ExportData import ExportData
 from .ImportData import ImportData
@@ -29,12 +34,11 @@ from .add_tree import add_tree
 from .get_preset_paths import get_preset_paths
 from .utils import splits, splits2, splits3, declination, curve_up, curve_down, eval_bez, eval_bez_tan, round_bone, \
     to_rad, angle_mean, convert_quat
-
-
 import bpy
-import bpy.types
+
 import importlib
 importlib.reload(utils)
+
 
 bl_info = {
     "name": "Sapling_4",
@@ -52,100 +56,36 @@ if "bpy" in locals():
 else:
     import bpy
     import bpy.types
-    # from sapling_4 import utils
-    # from sapling_4.get_preset_paths import get_preset_paths
-    # from sapling_4.add_tree import add_tree
 
 #import cProfile
 
 useSet = False
 is_first = False
 
-shapeList = [('0', 'Conical (0)', 'Shape = 0'),
-            ('1', 'Spherical (1)', 'Shape = 1'),
-            ('2', 'Hemispherical (2)', 'Shape = 2'),
-            ('3', 'Cylindrical (3)', 'Shape = 3'),
-            ('4', 'Tapered Cylindrical (4)', 'Shape = 4'),
-            ('5', 'Flame (5)', 'Shape = 5'),
-            ('6', 'Inverse Conical (6)', 'Shape = 6'),
-            ('7', 'Tend Flame (7)', 'Shape = 7')]
-
-shapeList3 = [('0', 'Conical', ''),
-            ('6', 'Inverse Conical', ''),
-            ('1', 'Spherical', ''),#
-            ('2', 'Hemispherical', ''),#
-            ('3', 'Cylindrical', ''),
-            ('4', 'Tapered Cylindrical', ''),
-            ('10', 'Inverse Tapered Cylindrical', ''),
-            ('5', 'Flame', ''),#
-            ('7', 'Tend Flame', ''),
-            ('8', 'Custom Shape', '')]
-
-shapeList4 = [('0', 'Conical', ''),
-            ('6', 'Inverse Conical', ''),
-            ('1', 'Spherical', ''),
-            ('2', 'Hemispherical', ''),
-            ('3', 'Cylindrical', ''),
-            ('4', 'Tapered Cylindrical', ''),
-            ('10', 'Inverse Tapered Cylindrical', ''),
-            ('5', 'Flame', ''),
-            ('7', 'Tend Flame', '')]
-
-leaftypes = [('0', 'Rotated Alternate', 'leaves rotate around the stem and face upwards'),
-             ('1', 'Rotated Opposite', 'pairs of leaves rotate around the stem and face upwards'),
-             ('2', 'Alternate', 'leaves sprout alternately from each side of the stem, uses rotate angle'),
-             ('3', 'Opposite', 'pairs of leaves sprout from opposite sides of stem, uses rotate angle'),
-             ('4', 'Palmately Compound', 'multiple leaves radiating from stem tip, uses rotate angle for spread angle'),
-             ('5', 'Radial', 'leaves rotate around the stem (for needles)')]
-
-axes = [(("+0"), "X", ""),
-        (("+1"), "Y", ""),
-        (("+2"), "Z", ""),
-        (("-0"), "-X", ""),
-        (("-1"), "-Y", ""),
-        (("-2"), "-Z", "")]
-
-
-handleList = [('0', 'Auto', 'Auto'),
-                ('1', 'Vector', 'Vector')]
-
-settings = [('0', 'Geometry', 'Geometry'),
-            ('1', 'Branch Radius', 'Branch Radius'),
-            ('2', 'Branch Splitting', 'Branch Splitting'),
-            ('3', 'Branch Growth', 'Branch Growth'),
-            ('5', 'Leaves', 'Leaves'),
-            ('6', 'Armature', 'Armature')]
-
-branchmodes = [("original", "Original", "rotate around each branch"),
-              ("rotate", "Rotate", "evenly distribute  branches to point outward from center of tree"),
-              ("distance", "Distance", "remove overlapping branches")]
-
-attachmenttypes = [('0','Alternate', ''), ('1','Opposite', '')]
-
 
 class AddTree(bpy.types.Operator):
     bl_idname = "curve.tree_add"
     bl_label = "Sapling: Add Tree"
     bl_options = {'REGISTER', 'UNDO'}
-    
+
     def objectList(self, context):
         objects = []
         bObjects = bpy.data.objects
         for obj in bObjects:
             if (obj.type in ['MESH', 'CURVE', 'SURFACE']) and (obj.name not in ['tree', 'leaves']):
                 objects.append((obj.name, obj.name, ""))
-        
+
         return objects
 
     def update_tree(self, context):
         self.do_update = True
-        
+
     def update_leaves(self, context):
         if self.showLeaves:
             self.do_update = True
         else:
             self.do_update = False
-    
+
     def no_update_tree(self, context):
         self.do_update = False
 
@@ -156,7 +96,7 @@ class AddTree(bpy.types.Operator):
         description='Choose the settings to modify',
         items=settings,
         default='0', update=no_update_tree)
-    
+
     bevel: BoolProperty(name='Bevel',
         description='Whether the curve is beveled',
         default=False, update=update_tree)
@@ -182,7 +122,7 @@ class AddTree(bpy.types.Operator):
         description='The resolution along the curves',
         min=1,
         default=4, update=update_tree)
-    
+
     levels: IntProperty(name='Levels',
         description='Number of recursive branches',
         min=1,
@@ -366,7 +306,7 @@ class AddTree(bpy.types.Operator):
         min=0.0,
         max=1.0,
         default=[1, 1, 1, 1],
-        size=4, update=update_tree)                 
+        size=4, update=update_tree)
     ratioPower: FloatProperty(name='Radius Ratio Power',
         description='Power which defines the radius of a branch compared to the radius of the branch it grew from',
         min=0.0,
@@ -414,7 +354,7 @@ class AddTree(bpy.types.Operator):
         description='Type of leaf arrangment',
         items=leaftypes,
         default='0', update=update_leaves) #update_leaves update_tree
-    
+
     leafDownAngle: FloatProperty(name='Leaf Down Angle',
         description='The angle between a new leaf and the branch it grew from',
         default=45, update=update_leaves)
@@ -428,7 +368,7 @@ class AddTree(bpy.types.Operator):
     leafRotateV: FloatProperty(name='Rotation Variation',
         description='Add randomness to leaf orientation',
         default=0.0, update=update_leaves)
-    
+
     leafObjZ: EnumProperty(name='',
         description='leaf tip axis',
         items=axes,
@@ -441,7 +381,7 @@ class AddTree(bpy.types.Operator):
     #    description='leaf side axis',
     #    items=axes,
     #    default="+0", update=update_leaves)
-    
+
     leafScale: FloatProperty(name='Leaf Scale',
         description='The scaling applied to the whole leaf',
         min=0.0,
@@ -476,7 +416,7 @@ class AddTree(bpy.types.Operator):
         description='The way leaves are distributed on branches',
         items=shapeList4,
         default='6', update=update_tree)
-    
+
     armAnim: BoolProperty(name='Armature Animation',
         description='Whether animation is added to the armature',
         default=False, update=update_tree)
@@ -495,14 +435,14 @@ class AddTree(bpy.types.Operator):
         description='Number of frames to make the animation loop for, zero is disabled',
         min=0,
         default=0, update=update_tree)
-    
+
 #    windSpeed: FloatProperty(name='Wind Speed',
 #        description='The wind speed to apply to the armature',
 #        default=2.0, update=update_tree)
 #    windGust: FloatProperty(name='Wind Gust',
 #        description='The greatest increase over Wind Speed',
 #        default=0.0, update=update_tree)
-    
+
     wind: FloatProperty(name='Overall Wind Strength',
         description='The intensity of the wind to apply to the armature',
         default=1.0, update=update_tree)
@@ -510,7 +450,7 @@ class AddTree(bpy.types.Operator):
     gust: FloatProperty(name='Wind Gust Strength',
         description='The amount of directional movement, (from the positive Y direction)',
         default=1.0, update=update_tree)
-    
+
     gustF: FloatProperty(name='Wind Gust Fequency',
         description='The Fequency of directional movement',
         default=0.075, update=update_tree)
@@ -524,7 +464,7 @@ class AddTree(bpy.types.Operator):
     af3: FloatProperty(name='Randomness',
         description='Random offset in noise',
         default=4.0, update=update_tree)
-    
+
     makeMesh: BoolProperty(name='Make Mesh',
         description='Convert curves to mesh, uses skin modifier, enables armature simplification',
         default=False, update=update_tree)
@@ -571,27 +511,27 @@ class AddTree(bpy.types.Operator):
             row = box.row()
             row.prop(self, 'bevel')
             row.prop(self, 'makeMesh')
-            
+
             row = box.row()
             row.prop(self, 'bevelRes')
             row.prop(self, 'resU')
-            
+
             box.prop(self, 'handleType')
             row = box.row()
             row.prop(self, 'matIndex')
-            
+
             #box.prop(self, 'shape')
             #row = box.row()
             #row.prop(self, 'customShape')
             #box.prop(self, 'shapeS')
-            
+
             #box.label(text="")
             #box.prop(self, 'branchDist')
             #box.prop(self, 'nrings')
-            
+
             box.label(text="")
             box.prop(self, 'seed')
-            
+
             box.label(text="Tree Scale:")
             row = box.row()
             row.prop(self, 'scale')
@@ -622,34 +562,34 @@ class AddTree(bpy.types.Operator):
             row = box.row()
             row.menu('SAPLING_MT_preset', text='Load Preset')
             row.prop(self, 'limitImport')
-        
+
         elif self.chooseSet == '1':
             box = layout.box()
             box.label(text="Branch Radius:")
-            
+
             row = box.row()
             row.prop(self, 'bevel')
             row.prop(self, 'bevelRes')
-            
+
             box.prop(self, 'ratio')
-            
+
             box.prop(self, 'minRadius')
             box.prop(self, 'closeTip')
             box.prop(self, 'rootFlare')
             box.prop(self, 'splitRadiusRatio')
-            
+
             box.label(text="")
             box.label(text="Other:")
-            
+
             row = box.row()
             row.prop(self, 'autoTaper')
             row.prop(self, 'noTip')
-            
+
             row = box.row()
             row.prop(self, 'scale0')
             row.prop(self, 'scaleV0')
             box.prop(self, 'ratioPower')
-            
+
             split = box.split()
             col = split.column()
             col.prop(self, 'taper')
@@ -661,11 +601,11 @@ class AddTree(bpy.types.Operator):
             box.label(text="Branch Splitting:")
             box.prop(self, 'levels')
             box.prop(self, 'baseSplits')
-            
+
             row = box.row()
             row.prop(self, 'splitHeight')
             row.prop(self, 'splitBias')
-            
+
             row = box.row()
             split = row.split()
             col = split.column()
@@ -673,44 +613,44 @@ class AddTree(bpy.types.Operator):
             col = split.column()
             col.prop(self, 'baseSize')
             col.prop(self, 'baseSize_s')
-            
+
             #box.label(text="")
             box.prop(self, 'branchDist')
             box.prop(self, 'nrings')
-            
+
             split = box.split()
-            
+
             col = split.column()
             col.prop(self, 'branches')
             col.prop(self, 'splitAngle')
             col.prop(self, 'rotate')
             #col.prop(self, 'attractOut')
-            
+
             col.label(text="Branch Attachment:")
             row = col.row()
             row.prop(self, 'attachment', expand=True)
             col.prop(self, 'splitByLen')
             #col.prop(self, 'taperCrown')
-            
+
             col = split.column()
             col.prop(self, 'segSplits')
             col.prop(self, 'splitAngleV')
             col.prop(self, 'rotateV')
-            
+
             col.label(text="Branching Mode:")
             col.prop(self, 'rMode')
             col.prop(self, 'splitStraight')
             col.prop(self, 'splitLength')
-            
+
 
             box.column().prop(self, 'curveRes')
 
         elif self.chooseSet == '3':
             box = layout.box()
             box.label(text="Branch Growth:")
-            
+
             #box.prop(self, 'taperCrown')
-            
+
             row = box.row()
             split = row.split()
             col = split.column()
@@ -719,28 +659,28 @@ class AddTree(bpy.types.Operator):
             col = split.column()
             col.prop(self, 'shape')
             col.prop(self, 'shapeS')
-            
+
             box.label(text="Custom Shape:")
-            
+
             row = box.row()
             row.prop(self, 'customShape')
-            
+
             split = box.split()
-            
+
             col = split.column()
             col.prop(self, 'length')
             col.prop(self, 'downAngle')
             col.prop(self, 'curve')
             #col.prop(self, 'curveBack')
             col.prop(self, 'attractOut')
-            
+
             col = split.column()
-            
+
             col.prop(self, 'lengthV')
             col.prop(self, 'downAngleV')
             col.prop(self, 'curveV')
             col.prop(self, 'attractUp')
-            
+
             #box.prop(self, 'useOldDownAngle')
             box.prop(self, 'useParentAngle')
 
@@ -750,35 +690,35 @@ class AddTree(bpy.types.Operator):
             box.prop(self, 'showLeaves')
             box.prop(self, 'leafShape')
             box.prop(self, 'leafDupliObj')
-            
+
 
             row = box.row()
             row.label(text="Leaf Object Axes:")
             row.prop(self, 'leafObjZ')
             row.prop(self, 'leafObjY')
             #row.prop(self, 'leafObjX')
-            
-            
+
+
             box.prop(self, 'leaves')
             box.prop(self, 'leafBaseSize')
             box.prop(self, 'leafDist')
-            
+
             box.label(text="")
             box.prop(self, 'leafType')
             box.prop(self, 'leafangle')
             row = box.row()
             row.prop(self, 'leafDownAngle')
             row.prop(self, 'leafDownAngleV')
-            
+
             row = box.row()
             row.prop(self, 'leafRotate')
             row.prop(self, 'leafRotateV')
             box.label(text="")
-            
+
             row = box.row()
             row.prop(self, 'leafScale')
             row.prop(self, 'leafScaleX')
-            
+
             row = box.row()
             row.prop(self, 'leafScaleT')
             row.prop(self, 'leafScaleV')
@@ -786,33 +726,33 @@ class AddTree(bpy.types.Operator):
         elif self.chooseSet == '6':
             box = layout.box()
             box.label(text="Armature and Animation:")
-            
+
             row = box.row()
             row.prop(self, 'useArm')
             row.prop(self, 'previewArm')
-            
+
             row = box.row()
             row.prop(self, 'armAnim')
             row.prop(self, 'leafAnim')
-            
+
             box.prop(self, 'frameRate')
             box.prop(self, 'loopFrames')
-            
+
             #row = box.row()
             #row.prop(self, 'windSpeed')
             #row.prop(self, 'windGust')
-            
+
             box.label(text='Wind Settings:')
             box.prop(self, 'wind')
             row = box.row()
             row.prop(self, 'gust')
             row.prop(self, 'gustF')
-            
+
             box.label(text='Leaf Wind Settings:')
             box.prop(self, 'af1')
             box.prop(self, 'af2')
             box.prop(self, 'af3')
-            
+
             box.label(text="")
             box.prop(self, 'makeMesh')
             box.label(text="Armature Simplification:")
@@ -833,10 +773,10 @@ class AddTree(bpy.types.Operator):
             useSet = False
         if self.do_update:
             add_tree(self)
-            #cProfile.runctx("addTree(self)", globals(), locals())
+            # cProfile.runctx("addTree(self)", globals(), locals())
             print("Tree creation in %0.1fs" %(time.time()-start_time))
-            
-            #backup most recent setengs in case of exit
+
+            # Backup most recent setengs in case of exit
             if not is_first:
                 # Here we create a dict of all the properties.
                 data = []
@@ -851,19 +791,19 @@ class AddTree(bpy.types.Operator):
                 # Create the dict from the list
                 data = dict(data)
 
-                #then save
-                bpy.ops.sapling.exportdata("INVOKE_DEFAULT", data = repr([repr(data), "PreviousSettings", True]))
-            
+                # Then save
+                bpy.ops.sapling.exportdata("INVOKE_DEFAULT", data=repr([repr(data), "PreviousSettings", True]))
+
             is_first = False
-            
+
             return {'FINISHED'}
         else:
             return {'PASS_THROUGH'}
-    
+
     def invoke(self, context, event):
         global is_first
         is_first = True
-        bpy.ops.sapling.importdata(filename = "Default Tree.py")
+        bpy.ops.sapling.importdata(filename="Default Tree.py")
         return self.execute(context)
 
 
@@ -931,13 +871,13 @@ class AddMultipleTrees(bpy.types.Operator):
         description='Object to use for leaf instancing if Leaf Shape is DupliFaces or DupliVerts',
         items=objectList)
     leafObjZ: EnumProperty(name='',
-        description='leaf tip axis',
-        items=axes,
-        default="+2")
+                           description='leaf tip axis',
+                           items=axes,
+                           default="+2")
     leafObjY: EnumProperty(name='',
-        description='leaf top axis',
-        items=axes,
-        default="+1")
+                           description='leaf top axis',
+                           items=axes,
+                           default="+1")
     leafScale: FloatProperty(name='Leaf Scale',
         description='The scaling applied to the whole leaf (LeafScale)',
         min=0.0,
@@ -1042,11 +982,11 @@ class AddMultipleTrees(bpy.types.Operator):
 
     def execute(self, context):
         # Ensure the use of the global variables
-        global settings, useSet
+        global useSet
         # If we need to set the properties from a preset then do it here
         #presetAsDict
         if useSet:
-            for a, b in settings.items():
+            for a, b in sapling_4.settings_lists.settings.items():
                 setattr(self, a, b)
             useSet = False
         if self.do_update:
@@ -1069,14 +1009,17 @@ class AddMultipleTrees(bpy.types.Operator):
     def invoke(self, context, event):
 #        global settings, useSet
 #        useSet = True
-        bpy.ops.sapling.importdata(filename = "Default Tree.py")
+        bpy.ops.sapling.importdata(filename="Default Tree.py")
         return self.execute(context)
 
 
 def menu_func(self, context):
     self.layout.operator(AddTree.bl_idname, text="Add Tree 4.0", icon='PLUGIN')
+
+
 def menu_func2(self, context):
     self.layout.operator(AddMultipleTrees.bl_idname, text="Add Multiple Trees", icon='PLUGIN')
+
 
 classes = (
     AddTree,
