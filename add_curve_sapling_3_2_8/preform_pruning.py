@@ -91,37 +91,8 @@ def perform_pruning(tree_settings: TreeSettings, baseSize, childP, cu, n, scaleV
             # For each of the splines in this list set the number of splits and then grow it
             for spl in tempList:
 
-                #adjust numSplit
-                lastsplit = getattr(spl, 'splitlast', 0)
-                splitVal = splitValue
-                if lastsplit == 0:
-                    splitVal = splitValue ** 0.5# * 1.33
-                elif lastsplit == 1:
-                    splitVal = splitValue * splitValue
-
-                if k == 0:
-                    numSplit = 0
-                elif (k == 1) and (n == 0):
-                    numSplit = tree_settings.baseSplits
-                elif (n == 0) and (k == int((tree_settings.curveRes[n]) * tree_settings.splitHeight)) and (splitVal > 0): #always split at splitHeight
-                    numSplit = 1
-                elif (n == 0) and (k < ((tree_settings.curveRes[n]) * tree_settings.splitHeight)) and (k != 1): #splitHeight
-                    numSplit = 0
-                else:
-                    if (n >= 0) and tree_settings.splitByLen:
-                        L = ((spl.segL * tree_settings.curveRes[n]) / scaleVal)
-                        lf = 1
-                        for l in tree_settings.length[:n+1]:
-                            lf *= l
-                        L = L / lf
-                        numSplit = splits2(splitVal * L)
-                    else:
-                        numSplit = splits2(splitVal)
-
-                if (k == int(tree_settings.curveRes[n] / 2 + 0.5)) and (tree_settings.curveBack[n] != 0):
-                    spl.curv += 2 * (tree_settings.curveBack[n] / tree_settings.curveRes[n]) #was -4 *
-
-                grow_spline(tree_settings, n, spl, numSplit, splineList, splineToBone, closeTip, kp, stemsegL, boneStep)
+                split_and_grow_splines(boneStep, closeTip, k, kp, n, scaleVal, spl, splineList, splineToBone,
+                                       splitValue, stemsegL, tree_settings)
 
         # If pruning is enabled then we must to the check to see if the end of the spline is within the evelope
         if tree_settings.prune:
@@ -212,3 +183,36 @@ def perform_pruning(tree_settings: TreeSettings, baseSize, childP, cu, n, scaleV
         if not tree_settings.prune:
             startPrune = False
     return ratio, splineToBone
+
+
+def split_and_grow_splines(boneStep, closeTip, k, kp, n, scaleVal, spl, splineList, splineToBone, splitValue, stemsegL,
+                           tree_settings):
+    # adjust numSplit
+    lastsplit = getattr(spl, 'splitlast', 0)
+    splitVal = splitValue
+    if lastsplit == 0:
+        splitVal = splitValue ** 0.5  # * 1.33
+    elif lastsplit == 1:
+        splitVal = splitValue * splitValue
+    if k == 0:
+        numSplit = 0
+    elif (k == 1) and (n == 0):
+        numSplit = tree_settings.baseSplits
+    elif (n == 0) and (k == int((tree_settings.curveRes[n]) * tree_settings.splitHeight)) and (
+            splitVal > 0):  # always split at splitHeight
+        numSplit = 1
+    elif (n == 0) and (k < ((tree_settings.curveRes[n]) * tree_settings.splitHeight)) and (k != 1):  # splitHeight
+        numSplit = 0
+    else:
+        if (n >= 0) and tree_settings.splitByLen:
+            L = ((spl.segL * tree_settings.curveRes[n]) / scaleVal)
+            lf = 1
+            for l in tree_settings.length[:n + 1]:
+                lf *= l
+            L = L / lf
+            numSplit = splits2(splitVal * L)
+        else:
+            numSplit = splits2(splitVal)
+    if (k == int(tree_settings.curveRes[n] / 2 + 0.5)) and (tree_settings.curveBack[n] != 0):
+        spl.curv += 2 * (tree_settings.curveBack[n] / tree_settings.curveRes[n])  # was -4 *
+    grow_spline(tree_settings, n, spl, numSplit, splineList, splineToBone, closeTip, kp, stemsegL, boneStep)

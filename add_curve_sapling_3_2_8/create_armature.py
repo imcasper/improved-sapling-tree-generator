@@ -122,79 +122,8 @@ def create_armature(armature_settings: ArmatureSettings, leafP, cu, leafMesh, le
 
                 # Add the animation to the armature if required
                 if armature_settings.armAnim:
-                    # Define all the required parameters of the wind sway by the dimension of the spline
-                    #a0 = 4 * splineL * (1 - n / (numPoints + 1)) / max(s.bezier_points[n].radius, 1e-6)
-                    a0 = 2 * (splineL / numPoints) * (1 - n / (numPoints + 1)) / max(s.bezier_points[n].radius, 1e-6)
-                    a0 = a0 * min(step, numPoints)
-                    #a0 = (splineL / numPoints) / max(s.bezier_points[n].radius, 1e-6)
-                    a1 = (armature_settings.wind / 50) * a0
-                    a2 = a1 * .65  #(windGust / 50) * a0 + a1 / 2
-
-                    p = s.bezier_points[nx].co - s.bezier_points[n].co
-                    p.normalize()
-                    ag = (armature_settings.wind * armature_settings.gust / 50) * a0
-                    a3 = -p[0] * ag
-                    a4 = p[2] * ag
-
-                    a1 = radians(a1)
-                    a2 = radians(a2)
-                    a3 = radians(a3)
-                    a4 = radians(a4)
-
-                    #wind bending
-                    if armature_settings.loopFrames == 0:
-                        swayFreq = armature_settings.gustF * (tau / fps) * armature_settings.frameRate  #animSpeed # .075 # 0.02
-                    else:
-                        swayFreq = 1 / (armature_settings.loopFrames / tau)
-
-                    # Prevent tree base from rotating
-                    if (boneName == "bone000.000") or (boneName == "bone000.001"):
-                        a1 = 0
-                        a2 = 0
-                        a3 = 0
-                        a4 = 0
-
-                    # Add new fcurves for each sway as well as the modifiers
-                    swayX = armOb.animation_data.action.fcurves.new('pose.bones["' + boneName + '"].rotation_euler', index=0)
-                    swayY = armOb.animation_data.action.fcurves.new('pose.bones["' + boneName + '"].rotation_euler', index=2)
-
-                    swayXMod1 = swayX.modifiers.new(type='FNGENERATOR')
-                    swayXMod2 = swayX.modifiers.new(type='FNGENERATOR')
-
-                    swayYMod1 = swayY.modifiers.new(type='FNGENERATOR')
-                    swayYMod2 = swayY.modifiers.new(type='FNGENERATOR')
-
-                    # Set the parameters for each modifier
-                    swayXMod1.amplitude = a1
-                    swayXMod1.phase_offset = bxOffset
-                    swayXMod1.phase_multiplier = windFreq1
-
-                    swayXMod2.amplitude = a2
-                    swayXMod2.phase_offset = 0.7 * bxOffset
-                    swayXMod2.phase_multiplier = windFreq2
-                    swayXMod2.use_additive = True
-
-                    swayYMod1.amplitude = a1
-                    swayYMod1.phase_offset = byOffset
-                    swayYMod1.phase_multiplier = windFreq1
-
-                    swayYMod2.amplitude = a2
-                    swayYMod2.phase_offset = 0.7 * byOffset
-                    swayYMod2.phase_multiplier = windFreq2
-                    swayYMod2.use_additive = True
-
-                    #wind bending
-                    swayYMod3 = swayY.modifiers.new(type='FNGENERATOR')
-                    swayYMod3.amplitude = a3
-                    swayYMod3.phase_multiplier = swayFreq
-                    swayYMod3.value_offset = .6 * a3
-                    swayYMod3.use_additive = True
-
-                    swayXMod3 = swayX.modifiers.new(type='FNGENERATOR')
-                    swayXMod3.amplitude = a4
-                    swayXMod3.phase_multiplier = swayFreq
-                    swayXMod3.value_offset = .6 * a4
-                    swayXMod3.use_additive = True
+                    add_animation(armOb, armature_settings, boneName, bxOffset, byOffset, fps, n, numPoints, nx, s,
+                                  splineL, step, windFreq1, windFreq2)
 
     if leaves:
         bonelist = [b.name for b in arm.edit_bones]
@@ -209,58 +138,8 @@ def create_armature(armature_settings: ArmatureSettings, leafP, cu, leafMesh, le
                 idx = int(leafParent[4:-4])
 
             if armature_settings.leafAnim:
-                bname = "leaf" + str(i)
-                b = arm.edit_bones.new(bname)
-                b.head = cp.co
-                b.tail = cp.co + Vector((0, 0, .02))
-                b.envelope_distance = 0.0
-                b.parent = arm.edit_bones[leafParent]
-
-                vertexGroups[bname] = [v.index for v in leafMesh.vertices[leafVertSize * i:(leafVertSize * i + leafVertSize)]]
-
-                if armature_settings.armAnim:
-                    # Define all the required parameters of the wind sway by the dimension of the spline
-                    a1 = armature_settings.wind * .25
-                    a1 *= armature_settings.af1
-
-                    bMult = (1 / animSpeed) * 6
-                    bMult *= 1 / max(armature_settings.af2, .001)
-
-                    ofstRand = armature_settings.af3
-                    bxOffset = uniform(-ofstRand, ofstRand)
-                    byOffset = uniform(-ofstRand, ofstRand)
-
-                    # Add new fcurves for each sway as well as the modifiers
-                    swayX = armOb.animation_data.action.fcurves.new('pose.bones["' + bname + '"].rotation_euler', index=0)
-                    swayY = armOb.animation_data.action.fcurves.new('pose.bones["' + bname + '"].rotation_euler', index=2)
-
-                    # Add keyframe so noise works
-                    swayX.keyframe_points.add(1)
-                    swayY.keyframe_points.add(1)
-                    swayX.keyframe_points[0].co = (0, 0)
-                    swayY.keyframe_points[0].co = (0, 0)
-
-                    # Add noise modifiers
-                    swayXMod = swayX.modifiers.new(type='NOISE')
-                    swayYMod = swayY.modifiers.new(type='NOISE')
-
-                    if armature_settings.loopFrames != 0:
-                        swayXMod.use_restricted_range = True
-                        swayXMod.frame_end = armature_settings.loopFrames
-                        swayXMod.blend_in = 4
-                        swayXMod.blend_out = 4
-                        swayYMod.use_restricted_range = True
-                        swayYMod.frame_end = armature_settings.loopFrames
-                        swayYMod.blend_in = 4
-                        swayYMod.blend_out = 4
-
-                    swayXMod.scale = bMult
-                    swayXMod.strength = a1
-                    swayXMod.offset = bxOffset
-
-                    swayYMod.scale = bMult
-                    swayYMod.strength = a1
-                    swayYMod.offset = byOffset
+                animate_leafs(animSpeed, arm, armOb, armature_settings, cp, i, leafMesh, leafParent, leafVertSize,
+                              vertexGroups)
 
             else:
                 if leafParent not in vertexGroups:
@@ -281,3 +160,120 @@ def create_armature(armature_settings: ArmatureSettings, leafP, cu, leafMesh, le
         treeObj.parent = armOb
 
     return armOb
+
+
+def animate_leafs(animSpeed, arm, armOb, armature_settings, cp, i, leafMesh, leafParent, leafVertSize, vertexGroups):
+    bname = "leaf" + str(i)
+    b = arm.edit_bones.new(bname)
+    b.head = cp.co
+    b.tail = cp.co + Vector((0, 0, .02))
+    b.envelope_distance = 0.0
+    b.parent = arm.edit_bones[leafParent]
+    vertexGroups[bname] = [v.index for v in leafMesh.vertices[leafVertSize * i:(leafVertSize * i + leafVertSize)]]
+    if armature_settings.armAnim:
+        # Define all the required parameters of the wind sway by the dimension of the spline
+        a1 = armature_settings.wind * .25
+        a1 *= armature_settings.af1
+
+        bMult = (1 / animSpeed) * 6
+        bMult *= 1 / max(armature_settings.af2, .001)
+
+        ofstRand = armature_settings.af3
+        bxOffset = uniform(-ofstRand, ofstRand)
+        byOffset = uniform(-ofstRand, ofstRand)
+
+        # Add new fcurves for each sway as well as the modifiers
+        swayX = armOb.animation_data.action.fcurves.new('pose.bones["' + bname + '"].rotation_euler', index=0)
+        swayY = armOb.animation_data.action.fcurves.new('pose.bones["' + bname + '"].rotation_euler', index=2)
+
+        # Add keyframe so noise works
+        swayX.keyframe_points.add(1)
+        swayY.keyframe_points.add(1)
+        swayX.keyframe_points[0].co = (0, 0)
+        swayY.keyframe_points[0].co = (0, 0)
+
+        # Add noise modifiers
+        swayXMod = swayX.modifiers.new(type='NOISE')
+        swayYMod = swayY.modifiers.new(type='NOISE')
+
+        if armature_settings.loopFrames != 0:
+            swayXMod.use_restricted_range = True
+            swayXMod.frame_end = armature_settings.loopFrames
+            swayXMod.blend_in = 4
+            swayXMod.blend_out = 4
+            swayYMod.use_restricted_range = True
+            swayYMod.frame_end = armature_settings.loopFrames
+            swayYMod.blend_in = 4
+            swayYMod.blend_out = 4
+
+        swayXMod.scale = bMult
+        swayXMod.strength = a1
+        swayXMod.offset = bxOffset
+
+        swayYMod.scale = bMult
+        swayYMod.strength = a1
+        swayYMod.offset = byOffset
+
+
+def add_animation(armOb, armature_settings, boneName, bxOffset, byOffset, fps, n, numPoints, nx, s, splineL, step,
+                  windFreq1, windFreq2):
+    # Define all the required parameters of the wind sway by the dimension of the spline
+    # a0 = 4 * splineL * (1 - n / (numPoints + 1)) / max(s.bezier_points[n].radius, 1e-6)
+    a0 = 2 * (splineL / numPoints) * (1 - n / (numPoints + 1)) / max(s.bezier_points[n].radius, 1e-6)
+    a0 = a0 * min(step, numPoints)
+    # a0 = (splineL / numPoints) / max(s.bezier_points[n].radius, 1e-6)
+    a1 = (armature_settings.wind / 50) * a0
+    a2 = a1 * .65  # (windGust / 50) * a0 + a1 / 2
+    p = s.bezier_points[nx].co - s.bezier_points[n].co
+    p.normalize()
+    ag = (armature_settings.wind * armature_settings.gust / 50) * a0
+    a3 = -p[0] * ag
+    a4 = p[2] * ag
+    a1 = radians(a1)
+    a2 = radians(a2)
+    a3 = radians(a3)
+    a4 = radians(a4)
+    # wind bending
+    if armature_settings.loopFrames == 0:
+        swayFreq = armature_settings.gustF * (tau / fps) * armature_settings.frameRate  # animSpeed # .075 # 0.02
+    else:
+        swayFreq = 1 / (armature_settings.loopFrames / tau)
+    # Prevent tree base from rotating
+    if (boneName == "bone000.000") or (boneName == "bone000.001"):
+        a1 = 0
+        a2 = 0
+        a3 = 0
+        a4 = 0
+    # Add new fcurves for each sway as well as the modifiers
+    swayX = armOb.animation_data.action.fcurves.new('pose.bones["' + boneName + '"].rotation_euler', index=0)
+    swayY = armOb.animation_data.action.fcurves.new('pose.bones["' + boneName + '"].rotation_euler', index=2)
+    swayXMod1 = swayX.modifiers.new(type='FNGENERATOR')
+    swayXMod2 = swayX.modifiers.new(type='FNGENERATOR')
+    swayYMod1 = swayY.modifiers.new(type='FNGENERATOR')
+    swayYMod2 = swayY.modifiers.new(type='FNGENERATOR')
+    # Set the parameters for each modifier
+    swayXMod1.amplitude = a1
+    swayXMod1.phase_offset = bxOffset
+    swayXMod1.phase_multiplier = windFreq1
+    swayXMod2.amplitude = a2
+    swayXMod2.phase_offset = 0.7 * bxOffset
+    swayXMod2.phase_multiplier = windFreq2
+    swayXMod2.use_additive = True
+    swayYMod1.amplitude = a1
+    swayYMod1.phase_offset = byOffset
+    swayYMod1.phase_multiplier = windFreq1
+    swayYMod2.amplitude = a2
+    swayYMod2.phase_offset = 0.7 * byOffset
+    swayYMod2.phase_multiplier = windFreq2
+    swayYMod2.use_additive = True
+    # wind bending
+    swayYMod3 = swayY.modifiers.new(type='FNGENERATOR')
+    swayYMod3.amplitude = a3
+    swayYMod3.phase_multiplier = swayFreq
+    swayYMod3.value_offset = .6 * a3
+    swayYMod3.use_additive = True
+    swayXMod3 = swayX.modifiers.new(type='FNGENERATOR')
+    swayXMod3.amplitude = a4
+    swayXMod3.phase_multiplier = swayFreq
+    swayXMod3.value_offset = .6 * a4
+    swayXMod3.use_additive = True
