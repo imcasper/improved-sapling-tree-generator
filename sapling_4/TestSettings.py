@@ -16,8 +16,8 @@ class TestSettings(bpy.types.PropertyGroup):
 
     def update_tree(self, context):
         print("Test Update")
-        default_extractor(self)
-        app_prop(self)
+        # default_extractor(self)
+        # app_prop(self)
         # self.do_update = True
         # self.uppdater()
 
@@ -31,5 +31,23 @@ class TestSettings(bpy.types.PropertyGroup):
     twilac_ugg: BoolProperty(name='TwUgg',
                         description='To See If PropHolder Gets This',
                         default=False, update=update_tree)
+
+    bevelRes: IntProperty(name='Bevel Resolution',
+                          description='The bevel resolution of the curves',
+                          min=0,
+                          max=32,
+                          default=0, update=update_tree)
+    resU: IntProperty(name='Curve Resolution',
+                      description='The resolution along the curves',
+                      min=1,
+                      default=4, update=update_tree)
+
+    levels: IntProperty(name='Levels',
+                        description='Number of recursive branches',
+                        min=1,
+                        max=6,
+                        soft_max=4,
+                        default=3, update=update_tree)
+
 
 

@@ -18,7 +18,6 @@
 #
 # ======================= END GPL LICENSE BLOCK ========================
 import bpy
-# ======================= END GPL LICENSE BLOCK ========================
 
 import sapling_4
 from bpy.props import IntVectorProperty, FloatProperty, BoolProperty, EnumProperty, IntProperty, FloatVectorProperty, \
@@ -27,13 +26,14 @@ import bpy.types
 
 import sapling_4.settings_lists
 from .settings_lists import settings, axes, handleList, branchmodes, shapeList3, shapeList4, attachmenttypes, leaftypes
+from . import property_loader
 
 from .ExportData import ExportData
 from .ImportData import ImportData
 from .PresetMenu import PresetMenu
 from .AddTree import AddTree
 from .AddMultiTree import AddMultipleTrees
-from .TestSettings import TestSettings
+# from .TestSettings import TestSettings
 
 bl_info = {
     "name": "Sapling_4",
@@ -44,18 +44,6 @@ bl_info = {
     "description": "Adds a parametric tree.",
     "category": "Add Curve"}
 ##"Originally based on the method presented by Jason Weber & Joseph Penn in their paper 'Creation and Rendering of Realistic Trees'."##
-
-# if "bpy" in locals():
-#     import importlib
-#     importlib.reload(sapling_4)
-# else:
-#     import bpy
-#     import bpy.types
-
-#import cProfile
-
-
-# "Originally based on the method presented by Jason Weber & Joseph Penn in their paper 'Creation and Rendering of Realistic Trees'." #
 
 # if "bpy" in locals():
 #     import importlib
@@ -75,7 +63,7 @@ def menu_func2(self, context):
 
 classes = (
     # TestSettings,
-    AddTree,
+    # AddTree,
     AddMultipleTrees,
     PresetMenu,
     ImportData,
@@ -85,6 +73,7 @@ classes = (
 
 def register():
     from bpy.utils import register_class
+    property_loader.myregister()
     for cls in classes:
         register_class(cls)
     # bpy.types.Scene.test_sett = bpy.props.PointerProperty(type=TestSettings)
@@ -99,6 +88,7 @@ def unregister():
         unregister_class(cls)
     bpy.types.VIEW3D_MT_curve_add.remove(menu_func2)
     bpy.types.VIEW3D_MT_curve_add.remove(menu_func)
+    property_loader.myunregister()
 
 if __name__ == "__main__":
     register()

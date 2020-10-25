@@ -54,7 +54,7 @@ def add_tree(props):
         tree_curve_object.data.materials.append(None)
 
     # Fix the scale of the tree now
-    if random_seed == 0: #first tree is always average size
+    if random_seed == 0:  # first tree is always average size
         scale_v = 0
     scale_val = tree_settings.scale + uniform(-scale_v, scale_v)
     scale_val += copysign(1e-6, scale_val)  # Move away from zero to avoid div by zero
