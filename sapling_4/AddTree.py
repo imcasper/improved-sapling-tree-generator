@@ -18,7 +18,7 @@ from .get_preset_paths import get_preset_paths
 from .utils import splits, splits2, splits3, declination, curve_up, curve_down, eval_bez, eval_bez_tan, round_bone, \
     to_rad, angle_mean, convert_quat
 
-from .PropertyHolder import PropHolder, TPH, useSet, is_first
+from .PropertyHolder import PropHolder, TPH
 
 
 class AddTree(bpy.types.Operator):
@@ -314,21 +314,28 @@ class AddTree(bpy.types.Operator):
     def execute(self, context):
         print("AddTree: execute")
         # Ensure the use of the global variables
-        global TPH, useSet, is_first
+        global TPH
         start_time = time.time()
         # If we need to set the properties from a preset then do it here
-        if useSet:
+        if TPH.useSet:
             print("AddTree: use sett")
-            for a, b in TPH.items():
-                setattr(self, a, b)
+            thp_dict = TPH.__dict__
+            keys_to_ignore = ["chooseSet", "presetName", "limitImport", "do_update", "overwrite", "leafDupliObj"]
+            # print("thp_dict: ", thp_dict)
+            for key in keys_to_ignore:
+                if key in thp_dict:
+                    del thp_dict[key]
+            # print("thp_dict: ", thp_dict)
+            for a, b in thp_dict.items():
+                setattr(self.__getattribute__('test_property_group'), a, b)
             # if self.limitImport:
             #     setattr(self, 'levels', min(settings['levels'], 2))
             #     setattr(self, 'showLeaves', False)
-            useSet = False
+            TPH.useSet = False
         if self.do_update:
             print("AddTree: do_uppdate")
             # Backup most recent settings in case of exit
-            if not is_first:
+            if not TPH.is_first:
                 print("AddTree: not_first")
                 # Here we create a dict of all the properties.
                 data = self.create_property_dict()
@@ -356,7 +363,7 @@ class AddTree(bpy.types.Operator):
 
             print("Tree creation in %0.1fs" % (time.time() - start_time))
 
-            is_first = False
+            TPH.is_first = False
 
             return {'FINISHED'}
         else:
@@ -364,10 +371,10 @@ class AddTree(bpy.types.Operator):
 
     def invoke(self, context, event):
         print("AddTree: invoke")
-        global is_first
-        is_first = True
-        bpy.ops.sapling.importdata(filename="Default Tree.py")
-
+        global THP
+        TPH.is_first = True
         prop = self.__getattribute__('test_property_group')
         default_extractor(prop)
+        bpy.ops.sapling.importdata(filename="Default Tree.py")
+
         return self.execute(context)

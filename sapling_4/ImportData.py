@@ -5,7 +5,8 @@ import bpy
 from bpy.props import StringProperty
 
 from .get_preset_paths import get_preset_paths
-from .PropertyHolder import TPH, useSet, is_first
+from .presets_as_dict import preset_as_dict
+from .PropertyHolder import TPH
 
 
 class ImportData(bpy.types.Operator):
@@ -17,18 +18,8 @@ class ImportData(bpy.types.Operator):
 
     def execute(self, context):
         print("ImportData: execute")
-        # Make sure the operator knows about the global variables
-        # global settings, useSet, is_first
-        global useSet, is_first
-        # Read the preset data into the global settings
-        try:
-            f = open(os.path.join(get_preset_paths()[0], self.filename), 'r')
-        except (FileNotFoundError, IOError):
-            f = open(os.path.join(get_preset_paths()[1], self.filename), 'r')
-        settings = f.readline()
-        f.close()
-        #print(settings)
-        settings = ast.literal_eval(settings)
+        # Read the preset data
+        settings = preset_as_dict(self.filename)
 
         #use old attractup
         if type(settings['attractUp']) == float:
@@ -59,12 +50,13 @@ class ImportData(bpy.types.Operator):
         if 'curveBack' in settings:
             settings['curveBack'] = [0, 0, 0, 0]
 
-        # Set the flag to use the settings
-        useSet = True
-        is_first = True
+
 
         # print(settings)
         print("imported settings")
         global TPH
-        TPH.append_props(settings)
+        # Set the flag to use the settings
+        TPH.useSet = True
+        TPH.is_first = True
+        TPH.set_attr(settings)
         return {'FINISHED'}

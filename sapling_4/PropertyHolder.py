@@ -6,7 +6,9 @@ from typing import Dict
 
 class PropHolder:
     def __init__(self):
-        self.props = {}
+        self.useSet: bool = False
+        self.is_first: bool = False
+        # self.props = {}
 
     def append_props(self, new_props: Dict):
         # print("woop")
@@ -28,8 +30,6 @@ class PropHolder:
 
 
 TPH: PropHolder = PropHolder()
-useSet: bool = False
-is_first: bool = False
 
 # settings = ""
 
