@@ -32,7 +32,7 @@ from .ExportData import ExportData
 from .ImportData import ImportData
 from .PresetMenu import PresetMenu
 from .AddTree import AddTree
-from .AddMultiTree import AddMultipleTrees
+from .AddMultipleTrees import AddMultipleTrees
 # from .TestSettings import TestSettings
 
 bl_info = {

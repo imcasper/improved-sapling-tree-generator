@@ -3,10 +3,9 @@ import bpy.types
 from bpy.props import IntVectorProperty, FloatProperty, BoolProperty, EnumProperty, IntProperty
 from math import ceil
 import sapling_4
-
 import sapling_4.settings_lists
-from .settings_lists import axes
 
+from .settings_lists import axes
 from .add_tree import add_tree
 
 useSet = False
@@ -32,53 +31,50 @@ class AddMultipleTrees(bpy.types.Operator):
         return objects
 
     do_update: BoolProperty(name='Re-grow Trees',
-                            default=True)
+        default=True)
 
     bevel: BoolProperty(name='Bevel',
-                        description='Whether the curve is beveled',
-                        default=False)
+        description='Whether the curve is beveled',
+        default=False)
     showLeaves: BoolProperty(name='Show Leaves',
-                             description='Whether the leaves are shown',
-                             default=False)
+        description='Whether the leaves are shown',
+        default=False)
     useArm: BoolProperty(name='Use Armature',
-                         description='Whether the armature is generated',
-                         default=False)
+        description='Whether the armature is generated',
+        default=False)
     seed: IntProperty(name='Random Seed',
-                      description='The seed of the random number generator',
-                      default=0)
+        description='The seed of the random number generator',
+        default=0)
     numTrees: IntProperty(name='Number of trees',
-                          description='Number of trees to generate while incrementing the seed',
-                          min=1,
-                          default=1)
+        description='Number of trees to generate while incrementing the seed',
+        min=1,
+        default=1)
 
     scale: FloatProperty(name='Scale',
-                         description='The tree scale (Scale)',
-                         min=0.0,
-                         default=13.0)
+        description='The tree scale (Scale)',
+        min=0.0,
+        default=13.0)
     scaleV: FloatProperty(name='Scale Variation',
-                          description='The variation in the tree scale',
-                          default=3.0)
+        description='The variation in the tree scale',
+        default=3.0)
 
     bevelRes: IntProperty(name='Bevel Resolution',
-                          description='The bevel resolution of the curves',
-                          min=0,
-                          max=32,
-                          default=0)
+        description='The bevel resolution of the curves',
+        min=0,
+        max=32,
+        default=0)
     resU: IntProperty(name='Curve Resolution',
-                      description='The resolution along the curves',
-                      min=1,
-                      default=4)
+        description='The resolution along the curves',
+        min=1,
+        default=4)
 
     leafShape: EnumProperty(name='Leaf Shape',
-                            description='The shape of the leaves',
-                            items=(('hex', 'Hexagonal', '0'),
-                                   ('rect', 'Rectangular', '1'),
-                                   ('dFace', 'DupliFaces', '2'),
-                                   ('dVert', 'DupliVerts', '3')),
-                            default='hex')
+        description='The shape of the leaves',
+        items=(('hex', 'Hexagonal', '0'), ('rect', 'Rectangular', '1'), ('dFace', 'DupliFaces', '2'), ('dVert', 'DupliVerts', '3')),
+        default='hex')
     leafDupliObj: EnumProperty(name='Leaf Object',
-                               description='Object to use for leaf instancing if Leaf Shape is DupliFaces or DupliVerts',
-                               items=objectList)
+        description='Object to use for leaf instancing if Leaf Shape is DupliFaces or DupliVerts',
+        items=objectList)
     leafObjZ: EnumProperty(name='',
                            description='leaf tip axis',
                            items=axes,
@@ -88,41 +84,41 @@ class AddMultipleTrees(bpy.types.Operator):
                            items=axes,
                            default="+1")
     leafScale: FloatProperty(name='Leaf Scale',
-                             description='The scaling applied to the whole leaf (LeafScale)',
-                             min=0.0,
-                             default=0.17)
+        description='The scaling applied to the whole leaf (LeafScale)',
+        min=0.0,
+        default=0.17)
 
     armAnim: BoolProperty(name='Armature Animation',
-                          description='Whether animation is added to the armature',
-                          default=False)
+        description='Whether animation is added to the armature',
+        default=False)
     previewArm: BoolProperty(name='Fast Preview',
-                             description='Disable armature modifier, hide tree, and set bone display to wire, for fast playback',
-                             ##Disable skin modifier and hide tree and armature, for fast playback
-                             default=False)
+        description='Disable armature modifier, hide tree, and set bone display to wire, for fast playback',
+        ##Disable skin modifier and hide tree and armature, for fast playback
+        default=False)
     leafAnim: BoolProperty(name='Leaf Animation',
-                           description='Whether animation is added to the leaves',
-                           default=False)
+        description='Whether animation is added to the leaves',
+        default=False)
     frameRate: FloatProperty(name='Animation Speed',
-                             description=('Adjust speed of animation, relative to scene frame rate'),
-                             min=0.001,
-                             default=1)
+        description=('Adjust speed of animation, relative to scene frame rate'),
+        min=0.001,
+        default=1)
     loopFrames: IntProperty(name='Loop Frames',
-                            description='Number of frames to make the animation loop for, zero is disabled',
-                            min=0,
-                            default=0)
+        description='Number of frames to make the animation loop for, zero is disabled',
+        min=0,
+        default=0)
 
     makeMesh: BoolProperty(name='Make Mesh',
-                           description='Convert curves to mesh, uses skin modifier, enables armature simplification',
-                           default=False)
+        description='Convert curves to mesh, uses skin modifier, enables armature simplification',
+        default=False)
     armLevels: IntProperty(name='Armature Levels',
-                           description='Number of branching levels to make bones for, 0 is all levels',
-                           min=0,
-                           default=2)
+        description='Number of branching levels to make bones for, 0 is all levels',
+        min=0,
+        default=2)
     boneStep: IntVectorProperty(name='Bone Length',
-                                description='Number of stem segments per bone',
-                                min=1,
-                                default=[1, 1, 1, 1],
-                                size=4)
+        description='Number of stem segments per bone',
+        min=1,
+        default=[1, 1, 1, 1],
+        size=4)
 
     @classmethod
     def poll(cls, context):
@@ -165,7 +161,7 @@ class AddMultipleTrees(bpy.types.Operator):
         row.prop(self, 'leafObjZ')
         row.prop(self, 'leafObjY')
 
-        # box.prop(self, 'leaves')
+        #box.prop(self, 'leaves')
         box.prop(self, 'leafScale')
 
         box = layout.box()
@@ -188,17 +184,18 @@ class AddMultipleTrees(bpy.types.Operator):
         box.prop(self, 'armLevels')
         box.prop(self, 'boneStep')
 
+
     def execute(self, context):
         # Ensure the use of the global variables
         global useSet
         # If we need to set the properties from a preset then do it here
-        # presetAsDict
+        #presetAsDict
         if useSet:
             for a, b in sapling_4.settings_lists.settings.items():
                 setattr(self, a, b)
             useSet = False
         if self.do_update:
-            # loop for multiple trees
+            #loop for multiple trees
             initSeed = self.seed
             for n in range(self.numTrees):
                 setattr(self, 'seed', self.seed + n)

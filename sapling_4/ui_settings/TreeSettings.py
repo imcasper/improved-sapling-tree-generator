@@ -1,5 +1,5 @@
 from ..utils import to_rad
-from ..settings_lists import settings
+# from ..settings_lists import settings
 
 
 class TreeSettings:
@@ -27,7 +27,7 @@ class TreeSettings:
         self.attractOut = props.attractOut
         self.shape = int(props.shape)  #
         self.shapeS = int(props.shapeS)  #
-        self.customShape = props.customShape
+        self.customShape = list(props.customShape)
         self.branchDist = props.branchDist
         self.nrings = props.nrings
         self.baseSize = props.baseSize
@@ -66,5 +66,5 @@ class TreeSettings:
             self.bevelDepth = 1.0
 
         self.handles = 'VECTOR'
-        if props.handleType == '0':
+        if props.handleType == 0:
             self.handles = 'AUTO'

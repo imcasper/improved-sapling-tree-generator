@@ -17,6 +17,7 @@ def add_tree(props):
     global splitError
     # startTime = time.time()
     # Set the seed for repeatable results
+    print(props)
     random_seed = props.seed
     seed(random_seed)
 

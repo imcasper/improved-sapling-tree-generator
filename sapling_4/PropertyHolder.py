@@ -14,10 +14,24 @@ class PropHolder:
         new_prop_keys = new_props.keys()
         for key in new_prop_keys:
             self.props[key] = new_props.get(key)
-        print(self.props)
+        # print(self.props)
+
+    def set_attr(self, new_props: Dict):
+        # print(new_props)
+        print("settAttr")
+        new_prop_keys = new_props.keys()
+        for key in new_prop_keys:
+            setattr(self, key, new_props.get(key))
+            # self.props[key] = new_props.get(key)
+        # for prop_name, prop_value in new_props:
+        #     setattr(self, prop_name, prop_value)
 
 
 TPH: PropHolder = PropHolder()
+useSet: bool = False
+is_first: bool = False
+
+# settings = ""
 
 
 def app_prop(new_props: Dict):

@@ -14,6 +14,7 @@ class ExportData(bpy.types.Operator):
     data: StringProperty()
 
     def execute(self, context):
+        print("ExportData: execute")
         # Unpack some data from the input
         data, filename, overwrite = eval(self.data)
 

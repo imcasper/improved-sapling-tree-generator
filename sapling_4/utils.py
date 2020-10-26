@@ -114,8 +114,8 @@ def round_bone(bone, step):
 
 
 # Convert a list of degrees to radians
-def to_rad(list):
-    return [radians(a) for a in list]
+def to_rad(angle_list):
+    return [radians(a) for a in angle_list]
 
 
 def angle_mean(a1, a2, fac):

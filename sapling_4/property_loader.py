@@ -6,8 +6,8 @@ from .TestSettings import TestSettings
 
 
 classes = (
+    TestSettings,
     AddTree,
-    TestSettings
     # TTPH
 )
 
@@ -18,8 +18,8 @@ def myregister():
         register_class(cls)
     print("registered TestProps")
 
-    bpy.types.Scene.test_sett = bpy.props.PointerProperty(type=TestSettings)
-    bpy.types.Scene.sapling_settings = bpy.props.PointerProperty(type=AddTree)
+    # bpy.types.Scene.test_sett = bpy.props.PointerProperty(type=TestSettings)
+    # bpy.types.Scene.sapling_settings = bpy.props.PointerProperty(type=AddTree)
 
 
 

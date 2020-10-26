@@ -35,6 +35,16 @@ leaftypes = [('0', 'Rotated Alternate', 'leaves rotate around the stem and face 
              ('4', 'Palmately Compound', 'multiple leaves radiating from stem tip, uses rotate angle for spread angle'),
              ('5', 'Radial', 'leaves rotate around the stem (for needles)')]
 
+leafShapes = [('hex', 'Hexagonal', '0'),
+              ('rect', 'Rectangular', '1'),
+              ('dFace', 'DupliFaces', '2'),
+              ('dVert', 'DupliVerts', '3')]
+
+# leafShapes = [('6', 'Hexagonal', '0'),
+#               ('4', 'Rectangular', '1'),
+#               ('4', 'DupliFaces', '2'),
+#               ('1', 'DupliVerts', '3')]
+
 axes = [("+0", "X", ""),
         ("+1", "Y", ""),
         ("+2", "Z", ""),
@@ -44,7 +54,7 @@ axes = [("+0", "X", ""),
 
 handleList = [('0', 'Auto', 'Auto'),
               ('1', 'Vector', 'Vector')]
-global settings
+
 settings = [('0', 'Geometry', 'Geometry'),
             ('1', 'Branch Radius', 'Branch Radius'),
             ('2', 'Branch Splitting', 'Branch Splitting'),

@@ -1,5 +1,6 @@
 from math import radians
 from ..leaf_rot import leaf_rot
+from ..settings_lists import axes, leafShapes
 from typing import List
 
 
@@ -14,21 +15,27 @@ class LeafSettings:
         self.leafScaleX = props.leafScaleX  #
         self.leafScaleT = props.leafScaleT
         self.leafScaleV = props.leafScaleV
-        self.leafShape = props.leafShape
+        self.leafShape = leafShapes[props.leafShape][0]
         self.leafDupliObj = props.leafDupliObj
         self.leafangle = props.leafangle
         self.leafDist = int(props.leafDist)  #
 
         # leafObjX = props.leafObjX
-        self.leafObjY = props.leafObjY
-        self.leafObjZ = props.leafObjZ
+        # print("objY: ", props.leafObjY, "\nobjZ: ", props.leafObjZ)
+        self.leafObjY = axes[props.leafObjY][0]
+        self.leafObjZ = axes[props.leafObjZ][0]
+
+        # print("self.objY: ", self.leafObjY, "\nself.objZ: ", self.leafObjZ)
         self.leafObjRot = leaf_rot(self.leafObjY, self.leafObjZ)
 
         self.leaves = 0
         if props.showLeaves:
             self.leaves = props.leaves
 
+        # print("props.leafShape: ", props.leafShape, "self.leafShape: ", self.leafShape)
         self.leafVertSize = {'hex': 6, 'rect': 4, 'dFace': 4, 'dVert': 1}[self.leafShape]
+
+        # self.leafVertSize = props.leafShape
 
     def get_uv_list(self):
         if self.leafShape == 'hex':

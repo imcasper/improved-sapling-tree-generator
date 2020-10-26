@@ -5,7 +5,7 @@ import bpy
 from bpy.props import StringProperty
 
 from .get_preset_paths import get_preset_paths
-from .settings_lists import settings
+from .PropertyHolder import TPH, useSet, is_first
 
 
 class ImportData(bpy.types.Operator):
@@ -16,8 +16,10 @@ class ImportData(bpy.types.Operator):
     filename: StringProperty()
 
     def execute(self, context):
+        print("ImportData: execute")
         # Make sure the operator knows about the global variables
-        global settings, useSet, is_first
+        # global settings, useSet, is_first
+        global useSet, is_first
         # Read the preset data into the global settings
         try:
             f = open(os.path.join(get_preset_paths()[0], self.filename), 'r')
@@ -60,4 +62,9 @@ class ImportData(bpy.types.Operator):
         # Set the flag to use the settings
         useSet = True
         is_first = True
+
+        # print(settings)
+        print("imported settings")
+        global TPH
+        TPH.append_props(settings)
         return {'FINISHED'}
