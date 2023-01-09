@@ -55,7 +55,7 @@ def grow_all_splines(tree_settings: TreeSettings, armature_settings: ArmatureSet
                 stemLength = stem.offsetLen + (len(stem.spline.bezier_points) - 1) * stem.segL
                 leafs_amount = int(leaf_settings.leaves * stemLength / 10.0 + 0.5)
                 if leafs_amount > 0:
-                    range_points = [t / leafs_amount for t in range(leafs_amount)]
+                    range_points = [(t + 1) / leafs_amount for t in range(leafs_amount)]
                     leaves_points.extend(interp_stem(stem, range_points, stemLength, base_size))
 
             summary_leaf_child_points.extend(leaves_points)
