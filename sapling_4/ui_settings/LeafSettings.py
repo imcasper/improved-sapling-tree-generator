@@ -6,6 +6,7 @@ from typing import List
 
 class LeafSettings:
     def __init__(self, props):
+        self.leafLevel = int(props.leafLevel)
         self.leafType = props.leafType
         self.leafDownAngle = radians(props.leafDownAngle)
         self.leafDownAngleV = radians(props.leafDownAngleV)

@@ -235,6 +235,7 @@ class AddTree(bpy.types.Operator):
         row.prop(self.test_property_group, 'leafObjY')
         # row.prop(self.test_property_group, 'leafObjX')
         box.prop(self.test_property_group, 'leaves')
+        box.prop(self.test_property_group, 'leafLevel')
         box.prop(self.test_property_group, 'leafBaseSize')
         box.prop(self.test_property_group, 'leafDist')
         box.label(text="")

@@ -6,11 +6,13 @@ from .kickstart_trunk import kickstart_trunk
 from .ui_settings.ArmatureSettings import ArmatureSettings
 from .ui_settings.LeafSettings import LeafSettings
 from .ui_settings.TreeSettings import TreeSettings
+from .interp_stem import interp_stem
 
 
 def grow_all_splines(tree_settings: TreeSettings, armature_settings: ArmatureSettings, leaf_settings: LeafSettings, attachment, base_size, tree_curve, scale_val):
     global split_error
     child_points = []
+    summary_leaf_child_points = []
     stem_list = []
     level_count = []
     spline_to_bone = deque([''])
@@ -47,5 +49,17 @@ def grow_all_splines(tree_settings: TreeSettings, armature_settings: ArmatureSet
         for stem in stem_list:
             spline_to_bone = grow_branch_level(tree_settings, base_size, child_points, lvl, scale_val, spline_to_bone, stem, close_tip, armature_settings.boneStep, leaf_settings.leaves, leaf_settings.leafType, attachment)
 
+        if leaf_settings.leafLevel <= lvl:
+            leaves_points = []
+            for stem in stem_list:
+                stemLength = stem.offsetLen + (len(stem.spline.bezier_points) - 1) * stem.segL
+                leafs_amount = int(leaf_settings.leaves * stemLength / 10.0 + 0.5)
+                if leafs_amount > 0:
+                    range_points = [t / leafs_amount for t in range(leafs_amount)]
+                    leaves_points.extend(interp_stem(stem, range_points, stemLength, base_size))
+
+            summary_leaf_child_points.extend(leaves_points)
+
         level_count.append(len(tree_curve.splines))
-    return child_points, level_count, spline_to_bone
+
+    return summary_leaf_child_points, level_count, spline_to_bone

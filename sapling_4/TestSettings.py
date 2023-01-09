@@ -328,9 +328,14 @@ class TestSettings(bpy.types.PropertyGroup):
         items=attachmenttypes,
         default='0', update=update_tree)
     leaves: IntProperty(name='Leaves',
-        description='Maximum number of leaves per branch',
+        description='Maximum number of leaves per 10 unit',
         min=0,
         default=25, update=update_tree)
+    leafLevel: IntProperty(name='Start level',
+        description='Level of branches on which leaves appear',
+        min=0,
+        max=4,
+        default=1, update=update_tree)
     leafType: EnumProperty(name='Leaf Type',
         description='Type of leaf arrangment',
         items=leaftypes,
