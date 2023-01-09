@@ -309,6 +309,11 @@ class AddTree(bpy.types.Operator):
         description='Maximum number of leaves per branch',
         min=0,
         default=25, update=update_tree)
+    leafLevel: IntProperty(name='Start level',
+                        description='Level of branches on which leaves appear',
+                        min=0,
+                        max=4,
+                        default=1, update=update_tree)
     leafType: EnumProperty(name='Leaf Type',
         description='Type of leaf arrangment',
         items=leaftypes,
@@ -629,6 +634,7 @@ class AddTree(bpy.types.Operator):
         row.prop(self, 'leafObjY')
         # row.prop(self, 'leafObjX')
         box.prop(self, 'leaves')
+        box.prop(self, 'leafLevel')
         box.prop(self, 'leafBaseSize')
         box.prop(self, 'leafDist')
         box.label(text="")

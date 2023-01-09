@@ -17,6 +17,7 @@ class LeafSettings:
         self.leafShape = props.leafShape
         self.leafDupliObj = props.leafDupliObj
         self.leafangle = props.leafangle
+        self.leafLevel = int(props.leafLevel)  #
         self.leafDist = int(props.leafDist)  #
 
         # leafObjX = props.leafObjX
